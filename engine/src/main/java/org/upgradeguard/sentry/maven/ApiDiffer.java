@@ -40,8 +40,15 @@ public final class ApiDiffer {
             return result;
         }
         JarArchiveComparatorOptions options = new JarArchiveComparatorOptions();
-        JarArchiveComparator comparator = new JarArchiveComparator(options);
-        List<JApiClass> classes = comparator.compare(new JApiCmpArchive(oldJar.toFile(), oldVersion), new JApiCmpArchive(newJar.toFile(), newVersion));
+        options.setIgnoreMissingClasses(true);
+        List<JApiClass> classes;
+        try {
+            classes = new JarArchiveComparator(options).compare(new JApiCmpArchive(oldJar.toFile(), oldVersion), new JApiCmpArchive(newJar.toFile(), newVersion));
+        } catch (RuntimeException failure) {
+            result.put("available", false);
+            result.put("reason", "the two library versions could not be compared: " + String.valueOf(failure.getMessage()).replaceAll("\\s+", " ").substring(0, Math.min(160, String.valueOf(failure.getMessage()).length())));
+            return result;
+        }
         int removedClasses = 0;
         int methodChanges = 0;
         int fieldChanges = 0;
@@ -64,6 +71,7 @@ public final class ApiDiffer {
             }
         }
         result.put("available", true);
+        result.put("missing_classes_ignored", true);
         result.put("class_changes", removedClasses);
         result.put("method_changes", methodChanges);
         result.put("field_changes", fieldChanges);
