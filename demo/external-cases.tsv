@@ -1,4 +1,4 @@
-id	repository	breaking_commit	package	from	to	java_home	expected
-E1	https://github.com/hap-java/HAP-Java	6ad104c4fb9263ad1bb29e6b33618b8225efd92d	org.bouncycastle:bcprov-jdk15on	1.51	1.67	/Library/Java/JavaVirtualMachines/amazon-corretto-11.jdk/Contents/Home	REJECT
-E2	https://github.com/sabomichal/jooq-meta-postgres-flyway	8e1f0f08eef839903067c7c11432117c4897d0cd	org.jooq:jooq-meta	3.16.6	3.17.0	/Library/Java/JavaVirtualMachines/amazon-corretto-11.jdk/Contents/Home	REJECT
-E3	https://github.com/BadSkater0729/WorldwideChat	832e0f184efdad0fcf15d14cb7af5e30239ff454	com.github.cryptomorin:XSeries	8.5.0.1	8.6.0	/Library/Java/JavaVirtualMachines/amazon-corretto-11.jdk/Contents/Home	REJECT
+id	repository	breaking_commit	pull_request	package	from	to	java_home	expected
+E1	https://github.com/hap-java/HAP-Java	6ad104c4fb9263ad1bb29e6b33618b8225efd92d	146	org.bouncycastle:bcprov-jdk15on	1.51	1.67	/Library/Java/JavaVirtualMachines/amazon-corretto-11.jdk/Contents/Home	REJECT
+E2	https://github.com/sabomichal/jooq-meta-postgres-flyway	8e1f0f08eef839903067c7c11432117c4897d0cd	74	org.jooq:jooq-meta	3.16.6	3.17.0	/Library/Java/JavaVirtualMachines/amazon-corretto-11.jdk/Contents/Home	REJECT
+E3	https://github.com/BadSkater0729/WorldwideChat	832e0f184efdad0fcf15d14cb7af5e30239ff454	109	com.github.cryptomorin:XSeries	8.5.0.1	8.6.0	/Library/Java/JavaVirtualMachines/amazon-corretto-11.jdk/Contents/Home	REJECT
