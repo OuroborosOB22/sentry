@@ -5,6 +5,7 @@ import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -20,8 +21,8 @@ public class MainLayout extends AppLayout {
 
     public MainLayout() {
         UiAccess.remember();
-        Span mark = new Span();
-        mark.addClassName("brand-mark");
+        Image mark = new Image("logo.png", "");
+        mark.addClassName("brand-logo");
         H1 title = new H1(mark, new Span("Sentry"));
         title.getStyle().set("font-size", "var(--lumo-font-size-xl)").set("margin", "0").set("display", "flex").set("align-items", "center");
         RouterLink projects = new RouterLink("Projects", ProjectsView.class);

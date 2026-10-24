@@ -1,3 +1,5 @@
+<p align="center"><img src="app/src/main/resources/META-INF/resources/logo.png" width="120" alt="Sentry logo"></p>
+
 # Sentry
 
 Remembers when a Java or Python project last worked, shows what changed since, and tries one dependency change in a separate copy before it touches the real project.

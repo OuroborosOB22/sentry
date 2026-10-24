@@ -47,6 +47,13 @@ code, .mono {
   font-family: var(--sentry-mono);
 }
 
+.brand-logo {
+  width: 28px;
+  height: 28px;
+  margin-right: 0.5rem;
+  object-fit: contain;
+}
+
 .brand-mark {
   display: inline-block;
   width: 14px;
