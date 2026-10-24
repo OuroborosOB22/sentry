@@ -184,6 +184,19 @@ class OpenAiCompatibleProviderTest {
     }
 
     @Test
+    void hyphenatedNamesAndValuesWithCommasAreRedactedAndHugeLinesCannotSlowTheRedactor() {
+        String cleaned = Redactor.redact("api-key = abc,def\nPRIVATE-KEY: xyz\nmy-auth-token='a b c'\nplain = 1,2");
+        for (String secret : List.of("abc", "def", "xyz", "a b c")) {
+            assertFalse(cleaned.contains(secret), secret);
+        }
+        assertTrue(cleaned.contains("plain = 1,2"));
+        long started = System.nanoTime();
+        String huge = Redactor.redact("a".repeat(190_000) + "\nok = 1");
+        assertTrue((System.nanoTime() - started) / 1_000_000 < 2000);
+        assertTrue(huge.contains("ok = 1") && huge.contains("very long line removed"));
+    }
+
+    @Test
     void plainTextDropsWholeLinkTokensAndMarkupButKeepsNormalWords() {
         assertEquals("see the", PlainText.clean("see the [docs](https://x.example/y)", 100));
         assertEquals("a b", PlainText.clean("a <b>", 100).replace("b b", "b"));
