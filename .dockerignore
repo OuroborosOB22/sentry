@@ -1,0 +1,7 @@
+**/target
+**/node_modules
+data
+demo/evidence
+demo/fixture-repo
+.git
+.env
