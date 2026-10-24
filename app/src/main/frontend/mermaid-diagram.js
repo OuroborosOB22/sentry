@@ -13,6 +13,7 @@ class SentryMermaid extends HTMLElement {
         .message { padding: 1rem; color: var(--lumo-secondary-text-color, #555); }
         .node { cursor: pointer; }
         .stage svg g.node text, .stage svg g.node tspan { fill: #1b2330 !important; }
+        .stage svg g.node foreignObject, .stage svg g.node foreignObject * { color: #1b2330 !important; }
         .node:focus { outline: 3px solid var(--lumo-primary-color, #1a73e8); }
       </style>
       <div class="message" role="status"></div>
