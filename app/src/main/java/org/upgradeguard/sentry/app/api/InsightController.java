@@ -19,11 +19,14 @@ import org.upgradeguard.sentry.app.explain.InsightService;
 import org.upgradeguard.sentry.app.jobs.JobService;
 import org.upgradeguard.sentry.app.provider.ExecutionProvider;
 import org.upgradeguard.sentry.app.provider.ProviderRegistry;
+import org.upgradeguard.sentry.app.risk.RiskModelProvider;
 import org.upgradeguard.sentry.app.store.JobRepository;
 import org.upgradeguard.sentry.app.store.ProjectRepository;
 import org.upgradeguard.sentry.app.store.Rows;
 import org.upgradeguard.sentry.contract.Json;
 import org.upgradeguard.sentry.explain.MermaidRenderer;
+import org.upgradeguard.sentry.maven.MavenCoordinate;
+import org.upgradeguard.sentry.maven.Versions;
 import org.upgradeguard.sentry.source.SourceManifest;
 
 @RestController
@@ -35,14 +38,17 @@ public class InsightController {
     private final AppSettings settings;
     private final ProviderRegistry providers;
     private final SentryProperties properties;
+    private final RiskModelProvider risk;
 
-    public InsightController(InsightService insight, JobRepository jobs, ProjectRepository projects, AppSettings settings, ProviderRegistry providers, SentryProperties properties) {
+    public InsightController(InsightService insight, JobRepository jobs, ProjectRepository projects, AppSettings settings, ProviderRegistry providers, SentryProperties properties,
+                             RiskModelProvider risk) {
         this.insight = insight;
         this.jobs = jobs;
         this.projects = projects;
         this.settings = settings;
         this.providers = providers;
         this.properties = properties;
+        this.risk = risk;
     }
 
     private void allow(HttpServletRequest request, String jobId) {
@@ -128,6 +134,25 @@ public class InsightController {
         node.put("summary", check.summary());
         check.details().forEach(node.putArray("details")::add);
         return Json.text(node);
+    }
+
+    public record RiskBody(String packageName, String fromVersion, String toVersion) {
+    }
+
+    @PostMapping(value = "/projects/{id}/risk", produces = MediaType.APPLICATION_JSON_VALUE)
+    public String risk(HttpServletRequest request, @PathVariable String id, @RequestBody RiskBody body) {
+        projects.find(id).orElseThrow(ApiController.Missing::new);
+        if (!ProjectAccess.allowed(request, id)) {
+            throw new ApiController.Forbidden();
+        }
+        try {
+            MavenCoordinate.parse(body.packageName());
+            Versions.require(body.fromVersion());
+            Versions.require(body.toVersion());
+        } catch (IllegalArgumentException problem) {
+            throw new JobService.Rejected(problem.getMessage());
+        }
+        return Json.text(risk.predict(id, body.packageName(), body.fromVersion(), body.toVersion()));
     }
 
     @GetMapping(value = "/projects/{id}/transfer-preview", produces = MediaType.APPLICATION_JSON_VALUE)
