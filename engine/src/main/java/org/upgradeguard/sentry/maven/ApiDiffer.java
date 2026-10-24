@@ -40,7 +40,7 @@ public final class ApiDiffer {
             return result;
         }
         JarArchiveComparatorOptions options = new JarArchiveComparatorOptions();
-        options.setIgnoreMissingClasses(true);
+        options.getIgnoreMissingClasses().setIgnoreAllMissingClasses(true);
         List<JApiClass> classes;
         try {
             classes = new JarArchiveComparator(options).compare(new JApiCmpArchive(oldJar.toFile(), oldVersion), new JApiCmpArchive(newJar.toFile(), newVersion));
