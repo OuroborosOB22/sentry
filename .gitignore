@@ -10,3 +10,6 @@ build/
 data/
 .mvn/wrapper/maven-wrapper.jar
 *.iml
+demo/fixture-repo/
+demo/evidence/
+evidence/

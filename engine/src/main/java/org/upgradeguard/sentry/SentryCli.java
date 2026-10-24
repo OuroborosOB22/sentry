@@ -23,6 +23,7 @@ public final class SentryCli {
 
     static int run(String[] args) {
         Map<String, String> options = new HashMap<>();
+        Map<String, String> properties = new HashMap<>();
         boolean json = false;
         boolean offline = false;
         String command = args.length > 0 ? args[0] : "";
@@ -32,6 +33,13 @@ public final class SentryCli {
                 json = true;
             } else if (name.equals("--offline-scan")) {
                 offline = true;
+            } else if (name.equals("--property") && index + 1 < args.length) {
+                String[] pair = args[++index].split("=", 2);
+                if (pair.length != 2 || !pair[0].matches("[A-Za-z0-9_.-]+")) {
+                    System.err.println("a property looks like name=value");
+                    return 3;
+                }
+                properties.put(pair[0], pair[1]);
             } else if (name.startsWith("--") && index + 1 < args.length) {
                 options.put(name.substring(2), args[++index]);
             } else {
@@ -40,7 +48,7 @@ public final class SentryCli {
             }
         }
         if (!command.equals("verify")) {
-            System.err.println("usage: sentry verify --project DIR --package GROUP:ARTIFACT --from VERSION --to VERSION [--out DIR] [--run-id ID] [--json] [--offline-scan]");
+            System.err.println("usage: sentry verify --project DIR --package GROUP:ARTIFACT --from VERSION --to VERSION [--out DIR] [--run-id ID] [--property name=value] [--json] [--offline-scan]");
             return 3;
         }
         try {
@@ -57,7 +65,7 @@ public final class SentryCli {
                     new OsvScanner(OsvScanner.httpTransport()));
             UpgradeEngine.Outcome outcome = engine.rehearse(new UpgradeEngine.Request(
                     Path.of(options.get("project")), MavenCoordinate.parse(options.get("package")), options.get("from"), options.get("to"), runId,
-                    "REHEARSE_UPGRADE", Path.of(options.getOrDefault("out", "evidence")), VerifyProfile.standard(), !offline));
+                    "REHEARSE_UPGRADE", Path.of(options.getOrDefault("out", "evidence")), VerifyProfile.standard().withProperties(properties), !offline));
             if (json) {
                 System.out.println(Json.text(outcome.evidence()));
             } else {
