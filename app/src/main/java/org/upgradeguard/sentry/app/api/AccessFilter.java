@@ -152,6 +152,6 @@ public class AccessFilter extends OncePerRequestFilter {
         response.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
         response.setHeader("Cross-Origin-Opener-Policy", "same-origin");
         response.setHeader("Content-Security-Policy", "default-src 'self'; img-src 'self' data:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'" + (api ? "" : " 'unsafe-eval'") + "; "
-                + "connect-src 'self' ws: wss:; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'self'");
+                + "connect-src 'self' ws: wss:; frame-ancestors 'none'; base-uri " + (api ? "'none'" : "'self'") + "; object-src 'none'; form-action 'self'");
     }
 }

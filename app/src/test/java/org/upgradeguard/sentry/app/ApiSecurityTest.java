@@ -1,5 +1,6 @@
 package org.upgradeguard.sentry.app;
 
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -69,7 +70,7 @@ class ApiSecurityTest {
     @Test
     void onlyThePagesMayEvaluateScripts() throws Exception {
         mvc.perform(get("/api/projects")).andExpect(header().string("Content-Security-Policy", not(containsString("unsafe-eval"))));
-        mvc.perform(get("/login")).andExpect(header().string("Content-Security-Policy", containsString("unsafe-eval")));
+        mvc.perform(get("/login")).andExpect(header().string("Content-Security-Policy", allOf(containsString("unsafe-eval"), containsString("base-uri 'self'"))));
     }
 
     @Test

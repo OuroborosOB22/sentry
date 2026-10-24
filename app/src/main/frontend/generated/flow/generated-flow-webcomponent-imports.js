@@ -35,14 +35,14 @@ import 'Frontend/generated/jar-resources/ReactRouterOutletElement.tsx';
 injectGlobalWebcomponentCss($cssFromFile_0.toString());
 const loadOnDemand = (key) => {
   const pending = [];
-  if (key === '179286a09183acbb83c61c78075b2cd15cb0b3dc81c1059807fd6cb35fb3f1b9') {
-    pending.push(import('./chunks/chunk-5945d5a2ba2fbe000150843e41b1a4477689fad47b549d097cc10bfeac291d15.js'));
-  }
   if (key === 'f88e503142382516e40f3c7644a20d18fc9ca25d3a39677b91147fd086404cc9') {
     pending.push(import('./chunks/chunk-d5809ba7c149827fbbabea6ceeedfbe8f3c3cb0c5fcd9e8836a4373497415222.js'));
   }
   if (key === 'e1627d8e74f541081b6bceac6d75f3bf6c648820a0d1c3ff87c594fb2ee78ffc') {
     pending.push(import('./chunks/chunk-60f2799bea41fe26519be1c498b5743c8df7d548d784a61da235425f843d70ee.js'));
+  }
+  if (key === '179286a09183acbb83c61c78075b2cd15cb0b3dc81c1059807fd6cb35fb3f1b9') {
+    pending.push(import('./chunks/chunk-5945d5a2ba2fbe000150843e41b1a4477689fad47b549d097cc10bfeac291d15.js'));
   }
   return Promise.all(pending);
 }
