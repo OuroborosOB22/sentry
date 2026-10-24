@@ -8,3 +8,5 @@ build/
 .env
 *.iml
 data/
+.mvn/wrapper/maven-wrapper.jar
+*.iml
