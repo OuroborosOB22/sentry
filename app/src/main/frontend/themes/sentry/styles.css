@@ -1,3 +1,73 @@
+@font-face{font-family:"Inter";font-weight:400;font-style:normal;font-display:swap;src:url("./fonts/inter-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"Inter";font-weight:600;font-style:normal;font-display:swap;src:url("./fonts/inter-latin-600-normal.woff2") format("woff2")}
+@font-face{font-family:"Inter";font-weight:800;font-style:italic;font-display:swap;src:url("./fonts/inter-latin-800-italic.woff2") format("woff2")}
+@font-face{font-family:"JetBrains Mono";font-weight:400;font-display:swap;src:url("./fonts/jetbrains-mono-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"JetBrains Mono";font-weight:600;font-display:swap;src:url("./fonts/jetbrains-mono-latin-600-normal.woff2") format("woff2")}
+
+html {
+  --lumo-font-family: "Inter", system-ui, sans-serif;
+  --lumo-base-color: #ffffff;
+  --lumo-body-text-color: #0a121a;
+  --lumo-secondary-text-color: #475a6c;
+  --lumo-primary-color: #0a5c99;
+  --lumo-primary-text-color: #0a5c99;
+  --lumo-primary-contrast-color: #04121f;
+  --lumo-border-radius-m: 6px;
+  --lumo-border-radius-l: 8px;
+  --sentry-accent: #9bd6ff;
+  --sentry-bg: #f4f8fc;
+  --sentry-outline: 3px;
+  --sentry-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+html[theme~="dark"] {
+  --lumo-base-color: #111513;
+  --lumo-body-text-color: #eaf3ee;
+  --lumo-secondary-text-color: #9db0a5;
+  --lumo-primary-color: #7de2b0;
+  --lumo-primary-text-color: #7de2b0;
+  --lumo-primary-contrast-color: #06130c;
+  --lumo-contrast-20pct: #25302b;
+  --sentry-accent: #7de2b0;
+  --sentry-bg: #0a0c0b;
+  --sentry-outline: 0px;
+}
+
+body {
+  background: var(--sentry-bg);
+}
+
+h1, h2, h3 {
+  font-weight: 800;
+  font-style: italic;
+  letter-spacing: -0.01em;
+}
+
+code, .mono {
+  font-family: var(--sentry-mono);
+}
+
+.brand-mark {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  background: var(--sentry-accent);
+  border: var(--sentry-outline) solid #000;
+  margin-right: 0.5rem;
+}
+
+.card {
+  outline: var(--sentry-outline) solid #000;
+  outline-offset: -1px;
+}
+
+vaadin-button[theme~="primary"] {
+  background: var(--sentry-accent);
+  color: var(--lumo-primary-contrast-color);
+  border: var(--sentry-outline) solid #000;
+  font-weight: 600;
+}
+
 html {
   --sentry-ink: #1b2330;
   --sentry-muted: #4d5a6b;
