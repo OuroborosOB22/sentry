@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.checkbox.CheckboxGroup;
 import com.vaadin.flow.component.details.Details;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Div;
@@ -19,6 +21,7 @@ import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.progressbar.ProgressBar;
+import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
@@ -410,24 +413,88 @@ public class RunView extends VerticalLayout implements BeforeEnterObserver {
         card.addClassName("card");
         card.add(new H3("Plain-language explanation"));
         Div output = new Div();
-        Button explain = new Button("Explain with the configured model");
-        explain.addClickListener(event -> {
-            output.removeAll();
+        Button start = new Button("Explain this result", event -> openExplainDialog(output));
+        card.add(new Paragraph("Optional. You choose what is shared and see where it goes before anything is sent. A model can never change the verdict."), start, output);
+        return card;
+    }
+
+    private void openExplainDialog(Div output) {
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("Explain this result");
+        dialog.setWidth("38rem");
+        RadioButtonGroup<String> mode = new RadioButtonGroup<>("What to include");
+        mode.setItems("Report only", "Report plus selected project files");
+        mode.setValue("Report only");
+        CheckboxGroup<String> files = new CheckboxGroup<>();
+        files.setLabel("Files that import the changed library (at most " + InsightService.MAX_FILES + ")");
+        try {
+            files.setItems(insight.candidateFiles(job.id()));
+        } catch (IOException | JobService.Rejected problem) {
+            files.setItems(List.of());
+        }
+        files.setVisible(false);
+        Div preview = new Div();
+        Button confirm = new Button();
+        confirm.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        Runnable refresh = () -> {
+            preview.removeAll();
+            List<String> chosen = mode.getValue().startsWith("Report plus") ? new ArrayList<>(files.getValue()) : List.of();
             try {
-                JsonNode answer = Json.parse(Json.text(insight.explain(job.id())));
-                String state = answer.path("status").asText();
-                if (state.equals("OK")) {
-                    output.add(new Paragraph(answer.path("labelled").asText() + " (" + answer.path("provider").asText() + ", " + answer.path("model").asText() + ")"),
-                            new Paragraph(answer.path("summary").asText()));
-                } else {
+                JsonNode shown = Json.parse(Json.text(insight.preview(job.id(), chosen)));
+                JsonNode destination = shown.path("destination");
+                boolean sent = shown.path("sent").asBoolean();
+                preview.add(new H3("What would be shared"));
+                preview.add(new Paragraph(sent ? "Sent to: " + destination.path("host").asText() + " (model " + destination.path("model").asText() + ")" : shown.path("note").asText()));
+                UnorderedList list = new UnorderedList();
+                shown.path("items").forEach(item -> list.add(new ListItem(item.path("id").asText())));
+                preview.add(list, new Paragraph(shown.path("total_bytes").asInt() + " bytes in total. " + (sent ? shown.path("note").asText() : "")));
+                confirm.setText(sent ? "Send this and explain" : "Build the explanation");
+                confirm.setEnabled(true);
+            } catch (IOException | JobService.Rejected problem) {
+                preview.add(new Paragraph(problem.getMessage()));
+                confirm.setEnabled(false);
+            }
+        };
+        mode.addValueChangeListener(event -> {
+            files.setVisible(event.getValue().startsWith("Report plus"));
+            refresh.run();
+        });
+        files.addValueChangeListener(event -> refresh.run());
+        confirm.addClickListener(event -> {
+            List<String> chosen = mode.getValue().startsWith("Report plus") ? new ArrayList<>(files.getValue()) : List.of();
+            dialog.close();
+            showExplanation(output, chosen);
+        });
+        dialog.add(new VerticalLayout(mode, files, preview));
+        dialog.getFooter().add(new Button("Cancel", event -> dialog.close()), confirm);
+        refresh.run();
+        dialog.open();
+    }
+
+    private void showExplanation(Div output, List<String> chosen) {
+        output.removeAll();
+        try {
+            JsonNode answer = Json.parse(Json.text(insight.explain(job.id(), chosen)));
+            if (answer.path("status").asText().equals("OK")) {
+                output.add(new Paragraph(answer.path("labelled").asText() + " (" + answer.path("provider").asText() + ", " + answer.path("model").asText() + ")"),
+                        new Paragraph(answer.path("summary").asText()));
+                UnorderedList notes = new UnorderedList();
+                answer.path("annotations").forEach(item -> notes.add(new ListItem(item.path("node_id").asText() + ": " + item.path("text").asText())));
+                if (notes.getChildren().findAny().isPresent()) {
+                    output.add(notes);
+                }
+                StringBuilder cited = new StringBuilder();
+                answer.path("sources").forEach(item -> cited.append(cited.length() == 0 ? "" : ", ").append(item.asText()));
+                output.add(new Paragraph("Evidence cited: " + cited));
+                if (!answer.path("note").asText().isBlank()) {
                     output.add(new Paragraph(answer.path("note").asText()));
                 }
-            } catch (IOException | JobService.Rejected problem) {
-                output.add(new Paragraph("The explanation could not be produced: " + problem.getMessage()));
+            } else {
+                output.add(new Paragraph(answer.path("note").asText()));
             }
-        });
-        card.add(new Paragraph("Optional. The model sees only the measured facts, never your source code, and it can never change the verdict."), explain, output);
-        return card;
+        } catch (IOException | JobService.Rejected problem) {
+            output.add(new Paragraph("The explanation could not be produced: " + problem.getMessage()));
+        }
     }
 
     private Div riskCard(JsonNode change) {
