@@ -18,6 +18,7 @@
 
   <modules>
     <module>engine</module>
+    <module>app</module>
   </modules>
 
   <properties>
