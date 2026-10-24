@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
+import org.springframework.web.util.UrlPathHelper;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.upgradeguard.sentry.app.config.SentryProperties;
 
@@ -30,9 +32,17 @@ public class AccessFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
         addHeaders(response);
-        String path = request.getRequestURI();
+        String path = normalizedPath(request);
         boolean hosted = !properties.auth().tokens().isEmpty();
-        if (path.equals("/login") || path.equals("/logout")) {
+        if (changesState(request) && crossSite(request)) {
+            deny(response, 403, "cross-site requests are not accepted");
+            return;
+        }
+        if (changesState(request) && isApi(path) && !jsonContent(request)) {
+            deny(response, 415, "send application/json");
+            return;
+        }
+        if ((path.equals("/login") || path.equals("/logout")) && !isApi(path)) {
             chain.doFilter(request, response);
             return;
         }
@@ -47,7 +57,7 @@ public class AccessFilter extends OncePerRequestFilter {
         }
         Optional<SentryProperties.Token> token = tokenFor(request, path);
         if (token.isEmpty()) {
-            if (path.startsWith("/api/") || path.startsWith("/mcp")) {
+            if (isApi(path)) {
                 deny(response, 401, "a valid access token is required");
             } else {
                 response.sendRedirect("/login");
@@ -63,12 +73,47 @@ public class AccessFilter extends OncePerRequestFilter {
         if (header != null && header.startsWith("Bearer ")) {
             return match(header.substring(7).trim());
         }
-        if (path.startsWith("/api/") || path.startsWith("/mcp")) {
+        if (isApi(path)) {
             return Optional.empty();
         }
         HttpSession session = request.getSession(false);
         Object stored = session == null ? null : session.getAttribute(SESSION_ATTRIBUTE);
         return stored instanceof String text ? match(text) : Optional.empty();
+    }
+
+    static String normalizedPath(HttpServletRequest request) {
+        UrlPathHelper helper = new UrlPathHelper();
+        helper.setRemoveSemicolonContent(true);
+        helper.setUrlDecode(true);
+        String path = StringUtils.cleanPath(helper.getPathWithinApplication(request));
+        return path.isEmpty() ? "/" : (path.startsWith("/") ? path : "/" + path);
+    }
+
+    static boolean isApi(String path) {
+        return path.equals("/api") || path.startsWith("/api/") || path.equals("/mcp") || path.startsWith("/mcp/");
+    }
+
+    private static boolean changesState(HttpServletRequest request) {
+        return !Set.of("GET", "HEAD", "OPTIONS").contains(request.getMethod());
+    }
+
+    private static boolean jsonContent(HttpServletRequest request) {
+        String type = request.getContentType();
+        return type != null && type.toLowerCase().startsWith("application/json");
+    }
+
+    private static boolean crossSite(HttpServletRequest request) {
+        String site = request.getHeader("Sec-Fetch-Site");
+        if (site != null && !site.equals("same-origin") && !site.equals("none")) {
+            return true;
+        }
+        String origin = request.getHeader("Origin");
+        if (origin == null) {
+            return false;
+        }
+        String own = request.getScheme() + "://" + request.getServerName() + ((request.getServerPort() == 80 && request.getScheme().equals("http"))
+                || (request.getServerPort() == 443 && request.getScheme().equals("https")) ? "" : ":" + request.getServerPort());
+        return !origin.equalsIgnoreCase(own);
     }
 
     public Optional<SentryProperties.Token> match(String supplied) {

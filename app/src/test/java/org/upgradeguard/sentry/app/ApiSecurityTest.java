@@ -159,4 +159,25 @@ class ApiSecurityTest {
         mvc.perform(post("/mcp").contentType(MediaType.APPLICATION_JSON).content("{broken")).andExpect(jsonPath("$.error.code").value(-32700));
         assertEquals(6, 6);
     }
+
+    @Test
+    void aWebsiteInAnotherTabCannotDriveTheLocalHub() throws Exception {
+        String body = "{\"name\":\"x\",\"path\":\"target/api-test-roots/good\"}";
+        mvc.perform(post("/api/projects").contentType(MediaType.APPLICATION_JSON).content(body).header("Origin", "http://evil.example")).andExpect(status().isForbidden());
+        mvc.perform(post("/api/projects").contentType(MediaType.APPLICATION_JSON).content(body).header("Origin", "http://localhost:9999")).andExpect(status().isForbidden());
+        mvc.perform(post("/api/projects").contentType(MediaType.APPLICATION_JSON).content(body).header("Sec-Fetch-Site", "cross-site")).andExpect(status().isForbidden());
+        mvc.perform(post("/api/projects").contentType(MediaType.APPLICATION_JSON).content(body).header("Sec-Fetch-Site", "same-site")).andExpect(status().isForbidden());
+        mvc.perform(post("/api/projects").contentType(MediaType.APPLICATION_JSON).content(body).header("Origin", "http://localhost").header("Sec-Fetch-Site", "same-origin"))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void simpleRequestsThatSkipThePreflightAreRefused() throws Exception {
+        String call = "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}";
+        mvc.perform(post("/mcp").contentType(MediaType.TEXT_PLAIN).content(call)).andExpect(status().isUnsupportedMediaType());
+        mvc.perform(post("/mcp").contentType(MediaType.APPLICATION_FORM_URLENCODED).content("a=b")).andExpect(status().isUnsupportedMediaType());
+        mvc.perform(post("/api/projects/demo/jobs").contentType(MediaType.TEXT_PLAIN).content("{}")).andExpect(status().isUnsupportedMediaType());
+        mvc.perform(post("/mcp").content(call)).andExpect(status().isUnsupportedMediaType());
+        mvc.perform(post("/mcp").contentType(MediaType.APPLICATION_JSON).content(call)).andExpect(status().isOk());
+    }
 }

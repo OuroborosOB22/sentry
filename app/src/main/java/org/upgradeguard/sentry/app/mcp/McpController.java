@@ -19,7 +19,7 @@ public class McpController {
         this.server = server;
     }
 
-    @PostMapping(value = "/mcp", consumes = MediaType.ALL_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/mcp", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> handle(HttpServletRequest request, @RequestBody String body) {
         Object granted = request.getAttribute(AccessFilter.PROJECTS_ATTRIBUTE);
         List<?> projects = granted instanceof List<?> list ? list : List.of();

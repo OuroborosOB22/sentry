@@ -106,4 +106,28 @@ class HostedModeTest {
         mvc.perform(post("/login").session(session).param("token", "admin-token-for-everything").param("csrf", csrf)).andExpect(redirectedUrl("/"));
         mvc.perform(post("/login").param("token", "admin-token-for-everything").param("csrf", csrf)).andExpect(status().isForbidden());
     }
+
+    @Test
+    void aBrowserSessionNeverOpensTheApiNoMatterHowThePathIsSpelled() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+        String form = mvc.perform(get("/login").session(session)).andReturn().getResponse().getContentAsString();
+        String csrf = form.replaceAll(".*name=\"csrf\" value=\"([^\"]+)\".*", "$1");
+        mvc.perform(post("/login").session(session).param("token", "admin-token-for-everything").param("csrf", csrf)).andExpect(redirectedUrl("/"));
+        for (String path : new String[] {"/api/projects", "/api/projects/", "/api//projects", "/api;x=1/projects", "/api/../api/projects", "/./api/projects", "/API/projects".toLowerCase()}) {
+            try {
+                mvc.perform(get(path).session(session)).andExpect(status().is(org.hamcrest.Matchers.anyOf(org.hamcrest.Matchers.is(401), org.hamcrest.Matchers.is(404), org.hamcrest.Matchers.is(400))));
+            } catch (Exception problem) {
+                throw new AssertionError("path " + path + " failed: " + problem, problem);
+            }
+        }
+        mvc.perform(get(java.net.URI.create("/%61pi/projects")).session(session)).andExpect(status().isUnauthorized());
+        mvc.perform(post("/mcp").session(session).contentType(MediaType.APPLICATION_JSON).content("{}")).andExpect(status().isUnauthorized());
+        mvc.perform(post("/mcp/").session(session).contentType(MediaType.APPLICATION_JSON).content("{}")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void crossSitePostsAreRefusedEvenWithAValidBearerToken() throws Exception {
+        mvc.perform(post("/api/projects/demo/jobs").header("Authorization", "Bearer admin-token-for-everything").header("Origin", "http://evil.example")
+                .contentType(MediaType.APPLICATION_JSON).content("{\"operation\":\"SNAPSHOT\",\"execution\":\"FAKE\"}")).andExpect(status().isForbidden());
+    }
 }
