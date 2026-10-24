@@ -38,7 +38,7 @@ public class AccessFilter extends OncePerRequestFilter {
             deny(response, 403, "cross-site requests are not accepted");
             return;
         }
-        if (changesState(request) && isApi(path) && !jsonContent(request)) {
+        if (changesState(request) && isApi(path) && hasBody(request) && !jsonContent(request)) {
             deny(response, 415, "send application/json");
             return;
         }
@@ -95,6 +95,10 @@ public class AccessFilter extends OncePerRequestFilter {
 
     private static boolean changesState(HttpServletRequest request) {
         return !Set.of("GET", "HEAD", "OPTIONS").contains(request.getMethod());
+    }
+
+    private static boolean hasBody(HttpServletRequest request) {
+        return request.getContentLengthLong() > 0 || request.getContentType() != null || request.getHeader("Transfer-Encoding") != null;
     }
 
     private static boolean jsonContent(HttpServletRequest request) {

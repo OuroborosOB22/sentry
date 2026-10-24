@@ -6,7 +6,6 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -116,29 +115,5 @@ public class ApiController {
     public ResponseEntity<String> cancel(HttpServletRequest request, @PathVariable String id) {
         job(request, id);
         return jobs.cancel(id) ? ResponseEntity.accepted().body("{\"cancelling\": true}") : ResponseEntity.status(HttpStatus.CONFLICT).body("{\"error\": \"the job is not running or queued\"}");
-    }
-
-    @ExceptionHandler(JobService.Rejected.class)
-    public ResponseEntity<String> rejected(JobService.Rejected problem) {
-        return error(HttpStatus.BAD_REQUEST, problem.getMessage());
-    }
-
-    @ExceptionHandler(Forbidden.class)
-    public ResponseEntity<String> forbidden() {
-        return error(HttpStatus.FORBIDDEN, "this token cannot use that project");
-    }
-
-    @ExceptionHandler(Missing.class)
-    public ResponseEntity<String> missing() {
-        return error(HttpStatus.NOT_FOUND, "not found");
-    }
-
-    @ExceptionHandler(IOException.class)
-    public ResponseEntity<String> unreadable(IOException problem) {
-        return error(HttpStatus.INTERNAL_SERVER_ERROR, "the stored data could not be read");
-    }
-
-    private static ResponseEntity<String> error(HttpStatus status, String message) {
-        return ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(Json.text(Json.object().put("error", message)));
     }
 }
