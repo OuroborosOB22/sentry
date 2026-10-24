@@ -8,7 +8,14 @@ public interface ExplanationProvider {
 
     String model();
 
-    Result explain(JsonNode evidence, DiagramData diagram);
+    Result explain(JsonNode evidence, DiagramData diagram, List<CodeFile> files);
+
+    default Result explain(JsonNode evidence, DiagramData diagram) {
+        return explain(evidence, diagram, List.of());
+    }
+
+    record CodeFile(String path, String text) {
+    }
 
     record Annotation(String nodeId, String text) {
     }

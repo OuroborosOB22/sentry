@@ -25,7 +25,7 @@ class OpenAiCompatibleProviderTest {
     final List<String> authorizations = new ArrayList<>();
     final AtomicInteger calls = new AtomicInteger();
     volatile int status = 200;
-    volatile String content = "{\"summary\": \"jinja2 3.1 removed Markup so tests failed.\", \"annotations\": [{\"node_id\": \"dep:jinja2\", \"text\": \"changed\"}, {\"node_id\": \"made-up\", \"text\": \"x\"}]}";
+    volatile String content = "{\"summary\": \"jinja2 3.1 removed Markup so tests failed.\", \"summary_evidence_ids\": [\"verdict:main\"], \"annotations\": [{\"node_id\": \"dep:jinja2\", \"text\": \"changed\", \"evidence_ids\": [\"dep:jinja2\"]}, {\"node_id\": \"made-up\", \"text\": \"x\", \"evidence_ids\": [\"verdict:main\"]}]}";
     volatile long delayMillis = 0;
 
     @BeforeEach
@@ -121,8 +121,63 @@ class OpenAiCompatibleProviderTest {
     @Test
     void aJsonAnswerInsideACodeFenceIsAccepted() throws IOException {
         JsonNode evidence = evidence();
-        content = "```json\n{\"summary\": \"fine\", \"annotations\": []}\n```";
+        content = "```json\n{\"summary\": \"fine\", \"summary_evidence_ids\": [\"verdict:main\"], \"annotations\": []}\n```";
         assertEquals("OK", provider(null, Duration.ofSeconds(5)).explain(evidence, DiagramBuilder.fromEvidence(evidence)).status());
+    }
+
+    @Test
+    void anAnnotationThatCitesEvidenceThatWasNeverProvidedIsLeftOut() throws IOException {
+        JsonNode evidence = evidence();
+        content = "{\"summary\": \"ok\", \"summary_evidence_ids\": [\"verdict:main\"], \"annotations\": [{\"node_id\": \"dep:jinja2\", \"text\": \"x\", \"evidence_ids\": [\"file:Invented.java\"]},"
+                + " {\"node_id\": \"dep:jinja2\", \"text\": \"no source at all\", \"evidence_ids\": []}]}";
+        ExplanationProvider.Result result = provider(null, Duration.ofSeconds(5)).explain(evidence, DiagramBuilder.fromEvidence(evidence));
+        assertEquals("OK", result.status());
+        assertEquals(0, result.annotations().size());
+        assertTrue(result.note().contains("2 annotation"));
+    }
+
+    @Test
+    void aSummaryWithoutProvidedEvidenceIsNotUsed() throws IOException {
+        JsonNode evidence = evidence();
+        content = "{\"summary\": \"confident but ungrounded\", \"summary_evidence_ids\": [\"test:99\"], \"annotations\": []}";
+        ExplanationProvider.Result result = provider(null, Duration.ofSeconds(5)).explain(evidence, DiagramBuilder.fromEvidence(evidence));
+        assertEquals("UNAVAILABLE", result.status());
+        assertEquals("", result.summary());
+    }
+
+    @Test
+    void linksAndMarkupInTheModelTextAreRemoved() throws IOException {
+        JsonNode evidence = evidence();
+        content = "{\"summary\": \"Done ![x](https://evil.example/?d=1) <img src=x> www.evil.example\", \"summary_evidence_ids\": [\"verdict:main\"],"
+                + " \"annotations\": [{\"node_id\": \"dep:jinja2\", \"text\": \"[go](javascript:alert(1))\", \"evidence_ids\": [\"dep:jinja2\"]}]}";
+        ExplanationProvider.Result result = provider(null, Duration.ofSeconds(5)).explain(evidence, DiagramBuilder.fromEvidence(evidence));
+        String all = result.summary() + result.annotations().get(0).text();
+        for (String forbidden : List.of("evil", "![", "](", "<img", "javascript", "www.")) {
+            assertFalse(all.toLowerCase().contains(forbidden), forbidden);
+        }
+        assertTrue(result.summary().startsWith("Done"));
+    }
+
+    @Test
+    void selectedFilesAreSentAsEvidenceWithSecretsRedactedAndTheirIdsAreAllowed() throws IOException {
+        JsonNode evidence = evidence();
+        List<ExplanationProvider.CodeFile> files = List.of(new ExplanationProvider.CodeFile("src/App.java", "class App { String password = hunter2; }"));
+        content = "{\"summary\": \"ok\", \"summary_evidence_ids\": [\"file:src/App.java\"], \"annotations\": []}";
+        ExplanationProvider.Result result = provider(null, Duration.ofSeconds(5)).explain(evidence, DiagramBuilder.fromEvidence(evidence), files);
+        assertEquals("OK", result.status());
+        assertTrue(result.sources().contains("file:src/App.java"));
+        String sent = bodies.get(0);
+        assertTrue(sent.contains("class App"));
+        assertFalse(sent.contains("hunter2"));
+        assertTrue(OpenAiCompatibleProvider.evidenceIds(evidence, files).contains("file:src/App.java"));
+    }
+
+    @Test
+    void plainTextDropsWholeLinkTokensAndMarkupButKeepsNormalWords() {
+        assertEquals("see the", PlainText.clean("see the [docs](https://x.example/y)", 100));
+        assertEquals("a b", PlainText.clean("a <b>", 100).replace("b b", "b"));
+        assertEquals("version 3.1 removed Markup", PlainText.clean("version 3.1 removed Markup", 100));
+        assertEquals(5, PlainText.clean("abcdefghij", 5).length());
     }
 
     @Test

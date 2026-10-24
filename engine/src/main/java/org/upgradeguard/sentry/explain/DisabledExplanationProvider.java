@@ -14,7 +14,7 @@ public final class DisabledExplanationProvider implements ExplanationProvider {
     }
 
     @Override
-    public Result explain(JsonNode evidence, DiagramData diagram) {
+    public Result explain(JsonNode evidence, DiagramData diagram, java.util.List<CodeFile> files) {
         return Result.disabled();
     }
 }
