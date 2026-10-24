@@ -32,8 +32,8 @@ Real means it ran for real here. Fake-tested means it ran against a stand-in tha
 
 | Command | Result |
 |---|---|
-| `./mvnw test` | see the report in the final message |
-| `./mvnw -Pslow test` | see the report in the final message |
+| `./mvnw test` | engine 74 passed, app 72 passed, 0 failed, 0 skipped |
+| `./mvnw -Pslow test` | engine 16 real-Maven tests passed (needs network) |
 | `demo/run.sh` | pass, test failure, compile failure verdicts |
 
 ## Choices made without asking
