@@ -177,7 +177,7 @@ public class RunView extends VerticalLayout implements BeforeEnterObserver {
             return;
         }
         details.add(answerCard(evidence), tabsCard(evidence), coverageCard(evidence), diagramCard(), explanationCard());
-        if (risk.enabled()) {
+        if (risk.enabled() && evidence.path("request").path("change").path("ecosystem").asText().equals("MAVEN")) {
             details.add(riskCard(evidence.path("request").path("change")));
         }
     }
