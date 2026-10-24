@@ -67,6 +67,12 @@ class ApiSecurityTest {
     }
 
     @Test
+    void onlyThePagesMayEvaluateScripts() throws Exception {
+        mvc.perform(get("/api/projects")).andExpect(header().string("Content-Security-Policy", not(containsString("unsafe-eval"))));
+        mvc.perform(get("/login")).andExpect(header().string("Content-Security-Policy", containsString("unsafe-eval")));
+    }
+
+    @Test
     void withoutTokensTheApiOnlyAnswersOnThisMachine() throws Exception {
         mvc.perform(get("/api/projects").with(request -> {
             request.setRemoteAddr("203.0.113.7");

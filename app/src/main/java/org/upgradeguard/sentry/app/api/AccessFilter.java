@@ -31,8 +31,8 @@ public class AccessFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
-        addHeaders(response);
         String path = normalizedPath(request);
+        addHeaders(response, isApi(path));
         boolean hosted = !properties.auth().tokens().isEmpty();
         if (changesState(request) && crossSite(request)) {
             deny(response, 403, "cross-site requests are not accepted");
@@ -145,13 +145,13 @@ public class AccessFilter extends OncePerRequestFilter {
         response.getWriter().write("{\"error\": \"" + message.replace("\"", "'") + "\"}");
     }
 
-    private static void addHeaders(HttpServletResponse response) {
+    private static void addHeaders(HttpServletResponse response, boolean api) {
         response.setHeader("X-Content-Type-Options", "nosniff");
         response.setHeader("X-Frame-Options", "DENY");
         response.setHeader("Referrer-Policy", "no-referrer");
         response.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
         response.setHeader("Cross-Origin-Opener-Policy", "same-origin");
-        response.setHeader("Content-Security-Policy", "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; "
+        response.setHeader("Content-Security-Policy", "default-src 'self'; img-src 'self' data:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'" + (api ? "" : " 'unsafe-eval'") + "; "
                 + "connect-src 'self' ws: wss:; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'self'");
     }
 }
