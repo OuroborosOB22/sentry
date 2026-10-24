@@ -119,10 +119,10 @@ public final class EvidenceBuilder {
         ObjectNode tests = node.putObject("tests");
         tests.set("stage", stage(observation.tests(), side, idByPath));
         ArrayNode results = tests.putArray("results");
-        observation.results().stream().sorted(java.util.Comparator.comparing(TestResult::id)).forEach(item -> {
+        VerdictRules.worstByIdentity(observation.results()).forEach((id, outcome) -> {
             ObjectNode entry = results.addObject();
-            entry.put("id", item.id().length() > 500 ? item.id().substring(0, 500) : item.id());
-            entry.put("outcome", item.outcome().name());
+            entry.put("id", id.length() > 500 ? id.substring(0, 500) : id);
+            entry.put("outcome", outcome.name());
         });
         ArrayNode dependencies = node.putArray("resolved_dependencies");
         observation.dependencies().forEach(item -> {
@@ -174,11 +174,12 @@ public final class EvidenceBuilder {
         if (comparable) {
             VerdictRules.regressions(before.results(), after.results()).forEach(regressions::add);
             VerdictRules.newFailing(before.results(), after.results()).forEach(newFailing::add);
-            Map<String, TestOutcome> after_ = new HashMap<>();
-            after.results().forEach(item -> after_.put(item.id(), item.outcome()));
-            before.results().stream().filter(item -> item.outcome() == TestOutcome.PASS)
-                    .filter(item -> after_.get(item.id()) == null || after_.get(item.id()) == TestOutcome.SKIP)
-                    .map(TestResult::id).sorted().forEach(missing::add);
+            Map<String, TestOutcome> afterWorst = VerdictRules.worstByIdentity(after.results());
+            VerdictRules.worstByIdentity(before.results()).forEach((id, outcome) -> {
+                if (outcome == TestOutcome.PASS && (afterWorst.get(id) == null || afterWorst.get(id) == TestOutcome.SKIP)) {
+                    missing.add(id);
+                }
+            });
         }
         return diff;
     }

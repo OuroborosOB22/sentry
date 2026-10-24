@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import org.upgradeguard.sentry.maven.MavenCoordinate;
 import org.upgradeguard.sentry.maven.SideObservation;
@@ -71,6 +72,12 @@ public final class VerdictRules {
         }
 
         boolean comparable = before.testsCollected() && after.testsCollected();
+        List<String> repeated = new ArrayList<>(duplicateIdentities(before.results()));
+        repeated.addAll(duplicateIdentities(after.results()));
+        if (!repeated.isEmpty()) {
+            notes.add(Finding.warning("duplicate-test-ids", repeated.size() + " test identity(ies) occur more than once, so the worst outcome of each was used: "
+                    + String.join(", ", repeated.subList(0, Math.min(3, repeated.size()))), "after/reports"));
+        }
         List<String> regressions = comparable ? regressions(before.results(), after.results()) : List.of();
         if (!regressions.isEmpty()) {
             findings.add(Finding.blocking("test-regression",
@@ -166,27 +173,56 @@ public final class VerdictRules {
         }
     }
 
-    public static List<String> regressions(List<TestResult> before, List<TestResult> after) {
-        Map<String, TestOutcome> current = new HashMap<>();
-        after.forEach(item -> current.put(item.id(), item.outcome()));
-        Set<String> found = new TreeSet<>();
-        for (TestResult old : before) {
-            if (old.outcome() == TestOutcome.PASS && current.getOrDefault(old.id(), TestOutcome.SKIP) != TestOutcome.PASS) {
-                found.add(old.id());
-            }
+    public static Map<String, TestOutcome> worstByIdentity(List<TestResult> results) {
+        Map<String, TestOutcome> worst = new TreeMap<>();
+        for (TestResult item : results) {
+            worst.merge(item.id(), item.outcome(), VerdictRules::worse);
         }
+        return worst;
+    }
+
+    private static TestOutcome worse(TestOutcome left, TestOutcome right) {
+        return rank(left) >= rank(right) ? left : right;
+    }
+
+    private static int rank(TestOutcome outcome) {
+        return switch (outcome) {
+            case ERROR, FAIL -> 2;
+            case SKIP -> 1;
+            case PASS -> 0;
+        };
+    }
+
+    public static List<String> duplicateIdentities(List<TestResult> results) {
+        Set<String> seen = new TreeSet<>();
+        Set<String> repeated = new TreeSet<>();
+        results.forEach(item -> {
+            if (!seen.add(item.id())) {
+                repeated.add(item.id());
+            }
+        });
+        return new ArrayList<>(repeated);
+    }
+
+    public static List<String> regressions(List<TestResult> before, List<TestResult> after) {
+        Map<String, TestOutcome> current = worstByIdentity(after);
+        Set<String> found = new TreeSet<>();
+        worstByIdentity(before).forEach((id, outcome) -> {
+            if (outcome == TestOutcome.PASS && current.getOrDefault(id, TestOutcome.SKIP) != TestOutcome.PASS) {
+                found.add(id);
+            }
+        });
         return new ArrayList<>(found);
     }
 
     public static List<String> newFailing(List<TestResult> before, List<TestResult> after) {
-        Set<String> known = new TreeSet<>();
-        before.forEach(item -> known.add(item.id()));
+        Map<String, TestOutcome> known = worstByIdentity(before);
         Set<String> found = new TreeSet<>();
-        for (TestResult item : after) {
-            if (!known.contains(item.id()) && (item.outcome() == TestOutcome.FAIL || item.outcome() == TestOutcome.ERROR)) {
-                found.add(item.id());
+        worstByIdentity(after).forEach((id, outcome) -> {
+            if (!known.containsKey(id) && (outcome == TestOutcome.FAIL || outcome == TestOutcome.ERROR)) {
+                found.add(id);
             }
-        }
+        });
         return new ArrayList<>(found);
     }
 }

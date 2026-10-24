@@ -179,4 +179,30 @@ class VerdictRulesTest {
         Verdict verdict = VerdictRules.decide(input(before, after, scan(true, List.of(), List.of())));
         assertTrue(verdict.codes().contains("transitive-changes"));
     }
+
+    @Test
+    void aLaterPassingDuplicateCannotHideAFailureWithTheSameIdentity() {
+        List<TestResult> after = List.of(new TestResult("t1", TestOutcome.FAIL), new TestResult("t1", TestOutcome.PASS));
+        Verdict verdict = VerdictRules.decide(input(side("1.0.0", passing("t1")), side("2.0.0", after), scan(true, List.of(), List.of())));
+        assertEquals(Decision.REJECT, verdict.decision());
+        assertTrue(verdict.codes().contains("test-regression"));
+        assertTrue(verdict.codes().contains("duplicate-test-ids"));
+    }
+
+    @Test
+    void aBaselineDuplicateThatAlreadyFailedIsNotAPassingTest() {
+        List<TestResult> before = List.of(new TestResult("t1", TestOutcome.PASS), new TestResult("t1", TestOutcome.FAIL), new TestResult("t2", TestOutcome.PASS));
+        Verdict verdict = VerdictRules.decide(input(side("1.0.0", before),
+                side("2.0.0", List.of(new TestResult("t1", TestOutcome.FAIL), new TestResult("t2", TestOutcome.PASS))), scan(true, List.of(), List.of())));
+        assertEquals(Decision.ACCEPT, verdict.decision());
+    }
+
+    @Test
+    void worstOutcomeOrderIsErrorOrFailThenSkipThenPass() {
+        java.util.Map<String, TestOutcome> worst = VerdictRules.worstByIdentity(List.of(new TestResult("a", TestOutcome.PASS), new TestResult("a", TestOutcome.SKIP),
+                new TestResult("b", TestOutcome.SKIP), new TestResult("b", TestOutcome.PASS), new TestResult("c", TestOutcome.PASS), new TestResult("c", TestOutcome.ERROR)));
+        assertEquals(TestOutcome.SKIP, worst.get("a"));
+        assertEquals(TestOutcome.SKIP, worst.get("b"));
+        assertEquals(TestOutcome.ERROR, worst.get("c"));
+    }
 }
