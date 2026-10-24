@@ -48,6 +48,10 @@ public class SettingsView extends VerticalLayout {
         where.setItems(providers.ids());
         where.setValue(settings.defaultExecution());
         Button save = new Button("Save", event -> {
+            if (!UiAccess.administrator()) {
+                Notification.show("Your access token cannot change settings.");
+                return;
+            }
             try {
                 settings.update(where.getValue(), null, null, null);
                 Notification.show("Saved.");
@@ -58,6 +62,10 @@ public class SettingsView extends VerticalLayout {
         save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         Button test = new Button("Test connection", event -> {
             testResult.removeAll();
+            if (!UiAccess.administrator()) {
+                testResult.add(new Paragraph("Your access token cannot test connections."));
+                return;
+            }
             ExecutionProvider.ProviderCheck check = providers.find(where.getValue()).map(ExecutionProvider::validate).orElse(null);
             if (check == null) {
                 testResult.add(new Paragraph("No such provider."));
@@ -84,7 +92,9 @@ public class SettingsView extends VerticalLayout {
         provider.setValue(settings.explanationProvider());
         TextField url = new TextField("Base URL (any OpenAI-compatible endpoint)");
         url.setWidth("30rem");
-        url.setValue(settings.explanationBaseUrl());
+        boolean administrator = UiAccess.administrator();
+        url.setValue(administrator ? settings.explanationBaseUrl() : settings.host(settings.explanationBaseUrl()));
+        url.setReadOnly(!administrator);
         TextField model = new TextField("Model or deployment name");
         model.setValue(settings.explanationModel());
         Paragraph key = new Paragraph(settings.apiKeyPresent() ? "An API key is set in the environment (its value is never shown)." : "No API key is set in the environment.");

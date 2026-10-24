@@ -26,6 +26,7 @@ final class UiAccess {
     }
 
     static boolean administrator() {
-        return allowed("*") || (VaadinSession.getCurrent() != null && VaadinSession.getCurrent().getAttribute(KEY) instanceof List<?> list && list.contains("*"));
+        VaadinSession session = VaadinSession.getCurrent();
+        return session != null && session.getAttribute(KEY) instanceof List<?> list && list.contains("*");
     }
 }
