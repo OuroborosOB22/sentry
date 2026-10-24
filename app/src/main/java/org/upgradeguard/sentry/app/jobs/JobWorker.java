@@ -97,7 +97,7 @@ public class JobWorker {
         String handle = null;
         try {
             JsonNode request = Json.parse(job.requestJson());
-            Path store = properties.dataDir().resolve("snapshots").toAbsolutePath();
+            Path store = properties.dataDir().resolve("snapshots").resolve(project.get().id()).toAbsolutePath();
             ExecutionProvider.JobSpec spec = new ExecutionProvider.JobSpec(job.id(), job.operation(), project.get().ecosystem(), slug(project.get()), Path.of(project.get().path()),
                     request.path("package").asText(null), request.path("from").asText(null), request.path("to").asText(null), store, request.path("snapshotId").asText(null), workDir);
             jobs.heartbeat(job.id(), owner, properties.leaseDuration(), Instant.now(), "starting");
@@ -187,30 +187,30 @@ public class JobWorker {
     }
 
     private void storeSnapshot(Rows.Job job, Path collected) throws IOException {
-        Path root = collected.resolve("snapshots");
-        if (!Files.isDirectory(root)) {
-            jobs.finish(job.id(), owner, "FAILED", null, null, "the snapshot job produced no snapshot", Instant.now());
+        Rows.Project project = projects.find(job.projectId()).orElseThrow(() -> new IOException("the project no longer exists"));
+        Path projectFolder = collected.resolve("snapshots").resolve(slug(project));
+        if (!Files.isDirectory(projectFolder, java.nio.file.LinkOption.NOFOLLOW_LINKS)) {
+            jobs.finish(job.id(), owner, "FAILED", null, null, "the snapshot job produced no snapshot for this project", Instant.now());
             return;
         }
-        try (var projectsDirs = Files.list(root)) {
-            for (Path projectDir : projectsDirs.toList()) {
-                try (var versions = Files.list(projectDir)) {
-                    for (Path folder : versions.filter(Files::isDirectory).filter(path -> !path.getFileName().toString().startsWith(".")).toList()) {
-                        JsonNode record = Json.read(folder.resolve("snapshot.json"));
-                        Path target = properties.dataDir().resolve("snapshots").resolve(projectDir.getFileName()).resolve(folder.getFileName()).toAbsolutePath();
-                        if (!Files.exists(target)) {
-                            Files.createDirectories(target.getParent());
-                            Files.move(folder, target);
-                        }
-                        snapshots.insertIfAbsent(new Rows.Snapshot(record.path("snapshot_id").asText(), job.projectId(), record.path("eligibility").asText(),
-                                record.path("profile_id").asText(), record.path("source").path("manifest_sha256").asText(), target.toString(), Instant.now()));
-                        jobs.finish(job.id(), owner, "SUCCEEDED", null, null, null, Instant.now());
-                        return;
-                    }
-                }
-            }
+        List<Path> folders;
+        try (var listing = Files.list(projectFolder)) {
+            folders = listing.filter(path -> !path.getFileName().toString().startsWith(".")).toList();
         }
-        jobs.finish(job.id(), owner, "FAILED", null, null, "the snapshot job produced no snapshot", Instant.now());
+        if (folders.size() != 1 || !Files.isDirectory(folders.get(0), java.nio.file.LinkOption.NOFOLLOW_LINKS)) {
+            jobs.finish(job.id(), owner, "FAILED", null, null, "the snapshot job did not produce exactly one snapshot", Instant.now());
+            return;
+        }
+        Path folder = folders.get(0);
+        JsonNode record = EvidenceVerifier.verifySnapshot(folder, folder.getFileName().toString());
+        Path target = properties.dataDir().resolve("snapshots").resolve(project.id()).resolve(slug(project)).resolve(folder.getFileName()).toAbsolutePath();
+        if (!Files.exists(target)) {
+            Files.createDirectories(target.getParent());
+            Files.move(folder, target);
+        }
+        snapshots.insertIfAbsent(new Rows.Snapshot(record.path("snapshot_id").asText(), project.id(), record.path("eligibility").asText(),
+                record.path("profile_id").asText(), record.path("source").path("manifest_sha256").asText(), target.toString(), Instant.now()));
+        jobs.finish(job.id(), owner, "SUCCEEDED", null, null, null, Instant.now());
     }
 
     private static String slug(Rows.Project project) {

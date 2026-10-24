@@ -2,6 +2,7 @@
 # The only program the hub is allowed to run on a remote machine.
 # It takes a fixed set of commands and nothing else, never a free-form shell string.
 set -eu
+umask 077
 
 root="${SENTRY_WORKER_HOME:-$HOME/sentry-jobs}"
 engine="${SENTRY_ENGINE_JAR:-$HOME/sentry/sentry-engine-0.1.0-cli.jar}"
@@ -97,8 +98,9 @@ case "$command" in
     job="$2"
     folder="${root:?}/${job:?}"
     [ -d "$folder/out" ] || fail "no output"
+    if find "$folder/out" -type l | grep -q .; then fail "links are not allowed in the output"; fi
     rm -f "${folder:?}/out.zip"
-    (cd "$folder/out" && zip -q -r -X "$folder/out.zip" .)
+    (cd "$folder/out" && zip -q -r -X -y "$folder/out.zip" .)
     printf '{"packaged": true}\n'
     ;;
   cleanup)

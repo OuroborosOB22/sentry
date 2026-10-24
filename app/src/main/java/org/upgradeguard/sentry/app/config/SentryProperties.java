@@ -18,6 +18,7 @@ public record SentryProperties(
         @DefaultValue("PT1H") Duration jobTimeout,
         @DefaultValue("PT15S") Duration leaseDuration,
         @DefaultValue("LOCAL") String defaultExecution,
+        @DefaultValue("false") boolean allowLocalInHosted,
         @DefaultValue Auth auth,
         @DefaultValue Azure azure,
         @DefaultValue Explanation explanation,

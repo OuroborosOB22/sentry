@@ -66,6 +66,9 @@ public class JobService {
         if (providers.find(execution).isEmpty()) {
             throw new Rejected("execution must be one of " + providers.ids());
         }
+        if (execution.equals("LOCAL") && !properties.auth().tokens().isEmpty() && !properties.allowLocalInHosted()) {
+            throw new Rejected("local execution runs project code next to the hub, so it is switched off while access tokens are configured; use another execution provider");
+        }
         ObjectNode request = Json.object();
         request.put("ecosystem", project.ecosystem());
         if (!submission.operation().equals("SNAPSHOT")) {

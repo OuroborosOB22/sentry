@@ -64,6 +64,7 @@ public class LocalExecutionProvider implements ExecutionProvider {
     @Override
     public String submit(JobSpec spec) throws IOException {
         Files.createDirectories(spec.workDir());
+        Files.setPosixFilePermissions(spec.workDir(), java.nio.file.attribute.PosixFilePermissions.fromString("rwx------"));
         Path out = Files.createDirectories(spec.workDir().resolve("out"));
         ProcessBuilder builder = new ProcessBuilder(command(spec, out));
         if (!spec.ecosystem().equals("MAVEN")) {

@@ -177,4 +177,26 @@ class AzureProviderProtocolTest {
         ExecutionProvider.JobSpec python = new ExecutionProvider.JobSpec("job-py-test", "REHEARSE_UPGRADE", "PYTHON", "project", project, "requests", "1", "2", null, null, temp.resolve("w"));
         assertThrows(IOException.class, () -> provider().submit(python));
     }
+
+    @Test
+    void theWorkerRefusesToPackageOutputThatContainsLinks() throws Exception {
+        ExecutionProvider provider = provider();
+        String handle = provider.submit(spec("job-link-test"));
+        waitFor(provider, handle);
+        Files.createSymbolicLink(remoteHome.resolve("sentry-jobs/job-link-test/out/job-link-test/shortcut"), Path.of("/etc/passwd"));
+        IOException problem = assertThrows(IOException.class, () -> provider.collect(handle, temp.resolve("never")));
+        assertTrue(problem.getMessage().contains("links are not allowed"), problem.getMessage());
+        assertFalse(Files.exists(temp.resolve("never")));
+        provider.cleanup(handle);
+    }
+
+    @Test
+    void theWorkerKeepsJobFoldersPrivateToItsUser() throws Exception {
+        ExecutionProvider provider = provider();
+        String handle = provider.submit(spec("job-private-test"));
+        waitFor(provider, handle);
+        String permissions = java.nio.file.attribute.PosixFilePermissions.toString(Files.getPosixFilePermissions(remoteHome.resolve("sentry-jobs/job-private-test")));
+        assertEquals("rwx------", permissions);
+        provider.cleanup(handle);
+    }
 }

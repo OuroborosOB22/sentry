@@ -45,67 +45,6 @@ class JobWorkerTest {
 
     FakeProvider fake = new FakeProvider();
 
-    static class FakeProvider implements ExecutionProvider {
-        String decision = "REJECT";
-        List<String> script = new ArrayList<>(List.of("RUNNING", "SUCCEEDED"));
-        boolean tamper;
-        boolean lose;
-        boolean failSubmit;
-        final AtomicInteger cancels = new AtomicInteger();
-        final AtomicInteger cleanups = new AtomicInteger();
-        final AtomicInteger submits = new AtomicInteger();
-        int polls;
-
-        @Override
-        public String id() {
-            return "FAKE";
-        }
-
-        @Override
-        public ProviderCheck validate() {
-            return new ProviderCheck(true, "fake", List.of());
-        }
-
-        @Override
-        public String submit(JobSpec spec) throws IOException {
-            submits.incrementAndGet();
-            if (failSubmit) {
-                throw new IOException("cannot start");
-            }
-            return spec.jobId();
-        }
-
-        @Override
-        public ProviderStatus status(String handle) throws IOException {
-            if (lose) {
-                throw new UnknownHandleException(handle);
-            }
-            String state = script.get(Math.min(polls++, script.size() - 1));
-            return new ProviderStatus(state, state.toLowerCase());
-        }
-
-        @Override
-        public void cancel(String handle) {
-            cancels.incrementAndGet();
-            script = new ArrayList<>(List.of("FAILED"));
-            polls = 0;
-        }
-
-        @Override
-        public Path collect(String handle, Path destination) throws IOException {
-            EvidenceFolders.create(destination, handle, decision);
-            if (tamper) {
-                Files.writeString(destination.resolve("after/pytest.log"), "forged");
-            }
-            return destination;
-        }
-
-        @Override
-        public void cleanup(String handle) {
-            cleanups.incrementAndGet();
-        }
-    }
-
     @BeforeEach
     void prepare() {
         jdbc.update("DELETE FROM findings");
@@ -212,5 +151,36 @@ class JobWorkerTest {
         assertThrows(JobService.Rejected.class, () -> service.submit("nobody", new JobService.Submission("SNAPSHOT", null, null, null, null, "FAKE")));
         assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM jobs", Integer.class));
         assertNotNull(service);
+    }
+
+    private String snapshotJob(String mode) {
+        fake.snapshotMode = mode;
+        fake.projectSlug = "tmp-demo".equals(mode) ? "tmp-demo" : "demo";
+        String id = service.submit("demo", new JobService.Submission("SNAPSHOT", null, null, null, null, "FAKE"));
+        worker.runOne();
+        return id;
+    }
+
+    @Test
+    void aSnapshotIsStoredUnderTheProjectAndItsSlugAndRecorded() {
+        projects.insert(new Rows.Project("other", "Other", "/tmp/other", "MAVEN", Instant.now()));
+        jdbc.update("UPDATE projects SET path = ? WHERE id = 'demo'", "/tmp/demo");
+        String id = snapshotJob("ok");
+        Rows.Job job = jobs.find(id).orElseThrow();
+        assertEquals("SUCCEEDED", job.status(), job.error());
+        var stored = jdbc.queryForList("SELECT folder FROM snapshots WHERE project_id = 'demo'", String.class);
+        assertEquals(1, stored.size());
+        assertTrue(stored.get(0).endsWith("snapshots/demo/demo/snap-0123456789ab"), stored.get(0));
+        assertTrue(Files.isRegularFile(Path.of(stored.get(0), "snapshot.json")));
+    }
+
+    @Test
+    void snapshotOutputThatTriesToLandInAnotherProjectOrBeAnotherIdIsRefused() {
+        for (String mode : List.of("other-project", "wrong-name", "tampered", "symlink", "two")) {
+            String id = snapshotJob(mode);
+            Rows.Job job = jobs.find(id).orElseThrow();
+            assertEquals("FAILED", job.status(), mode + ": " + job.error());
+            assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM snapshots", Integer.class), mode);
+        }
     }
 }
