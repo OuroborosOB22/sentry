@@ -197,6 +197,15 @@ class OpenAiCompatibleProviderTest {
     }
 
     @Test
+    void longNamesAndLongValuesCannotSlipPastABound() {
+        String name = "a_very_long_identifier_name_that_goes_on_and_on_for_more_than_forty_eight_characters_password";
+        String cleaned = Redactor.redact(name + " = '" + "S".repeat(400) + "'\nurl = \"https://user:" + "P".repeat(400) + "@host/x\"\ntoken = \"" + "T".repeat(400) + "\"");
+        for (String leaked : List.of("S".repeat(20), "P".repeat(20), "T".repeat(20))) {
+            assertFalse(cleaned.contains(leaked));
+        }
+    }
+
+    @Test
     void plainTextDropsWholeLinkTokensAndMarkupButKeepsNormalWords() {
         assertEquals("see the", PlainText.clean("see the [docs](https://x.example/y)", 100));
         assertEquals("a b", PlainText.clean("a <b>", 100).replace("b b", "b"));
