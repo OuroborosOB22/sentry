@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Optional;
 import org.upgradeguard.sentry.app.explain.InsightService;
 import org.upgradeguard.sentry.app.jobs.JobService;
+import org.upgradeguard.sentry.app.risk.RiskModelProvider;
 import org.upgradeguard.sentry.app.store.JobRepository;
 import org.upgradeguard.sentry.app.store.Rows;
 import org.upgradeguard.sentry.contract.Json;
@@ -48,6 +49,7 @@ public class RunView extends VerticalLayout implements BeforeEnterObserver {
     private final JobService jobs;
     private final JobRepository jobRows;
     private final InsightService insight;
+    private final RiskModelProvider risk;
     private Rows.Job job;
     private final Div status = new Div();
     private final Div details = new Div();
@@ -56,10 +58,11 @@ public class RunView extends VerticalLayout implements BeforeEnterObserver {
     private MermaidDiagram diagram;
     private Div drawer;
 
-    public RunView(JobService jobs, JobRepository jobRows, InsightService insight) {
+    public RunView(JobService jobs, JobRepository jobRows, InsightService insight, RiskModelProvider risk) {
         this.jobs = jobs;
         this.jobRows = jobRows;
         this.insight = insight;
+        this.risk = risk;
         addClassName("page");
         setPadding(false);
     }
@@ -174,6 +177,9 @@ public class RunView extends VerticalLayout implements BeforeEnterObserver {
             return;
         }
         details.add(answerCard(evidence), tabsCard(evidence), coverageCard(evidence), diagramCard(), explanationCard());
+        if (risk.enabled()) {
+            details.add(riskCard(evidence.path("request").path("change")));
+        }
     }
 
     private Div answerCard(JsonNode evidence) {
@@ -421,6 +427,28 @@ public class RunView extends VerticalLayout implements BeforeEnterObserver {
             }
         });
         card.add(new Paragraph("Optional. The model sees only the measured facts, never your source code, and it can never change the verdict."), explain, output);
+        return card;
+    }
+
+    private Div riskCard(JsonNode change) {
+        Div card = new Div();
+        card.addClassName("card");
+        card.add(new H3("Risk estimate (advice only)"));
+        Div output = new Div();
+        Button estimate = new Button("Ask the risk service");
+        estimate.addClickListener(event -> {
+            output.removeAll();
+            JsonNode answer = risk.predict(job.projectId(), change.path("package").asText(), change.path("from_version").asText(), change.path("to_version").asText());
+            if (answer.path("status").asText().equals("OK")) {
+                output.add(new Paragraph("Failure risk score " + String.format("%.2f", answer.path("risk_score").asDouble()) + " from model " + answer.path("model_version").asText()
+                        + ". " + answer.path("supported_scope").asText()));
+                output.add(new Paragraph("This is a ranking score, not a calibrated probability."));
+            } else {
+                output.add(new Paragraph("No estimate: " + answer.path("status").asText().replace('_', ' ').toLowerCase() + ". " + answer.path("reason").asText()));
+            }
+            output.add(new Paragraph(answer.path("advisory").asText()));
+        });
+        card.add(new Paragraph("The estimate uses version facts only and never changes the verdict above."), estimate, output);
         return card;
     }
 }
