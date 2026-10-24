@@ -225,7 +225,15 @@ public final class EvidenceBuilder {
         return coverage;
     }
 
+    public static List<ObjectNode> artifactManifestOf(Path folder, String skip) throws IOException {
+        return artifactManifest(folder, skip);
+    }
+
     static List<ObjectNode> artifactManifest(Path evidenceDir) throws IOException {
+        return artifactManifest(evidenceDir, "evidence.json");
+    }
+
+    static List<ObjectNode> artifactManifest(Path evidenceDir, String skip) throws IOException {
         List<ObjectNode> items = new ArrayList<>();
         if (!Files.isDirectory(evidenceDir)) {
             return items;
@@ -233,7 +241,7 @@ public final class EvidenceBuilder {
         try (Stream<Path> walk = Files.walk(evidenceDir)) {
             for (Path file : walk.filter(Files::isRegularFile).filter(path -> !Files.isSymbolicLink(path)).sorted().toList()) {
                 String relative = evidenceDir.relativize(file).toString().replace('\\', '/');
-                if (relative.equals("evidence.json") || !SAFE_PATH.matcher(relative).matches()) {
+                if (relative.equals(skip) || !SAFE_PATH.matcher(relative).matches()) {
                     continue;
                 }
                 ObjectNode item = Json.object();

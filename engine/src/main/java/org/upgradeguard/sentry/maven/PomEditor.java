@@ -58,6 +58,10 @@ public final class PomEditor {
         return pinLiteral(pomText, target, declared, newVersion, fromDirect ? "dependencies" : "dependencyManagement");
     }
 
+    public static String currentVersion(String pomText, MavenCoordinate target) throws UnsupportedPomException {
+        return pin(pomText, target, "0.0.0-probe").oldVersion();
+    }
+
     private static PinResult pinProperty(String pomText, Element project, String name, String newVersion) throws UnsupportedPomException {
         Element properties = child(project, "properties");
         Element holder = properties == null ? null : child(properties, name);

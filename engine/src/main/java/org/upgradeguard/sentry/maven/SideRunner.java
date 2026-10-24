@@ -73,6 +73,13 @@ public final class SideRunner {
                 infrastructure || verify.timedOut(), javaVersion, mavenVersion);
     }
 
+    public SideObservation observeResolutionOnly(String side, Path projectDir, Path outDir, VerifyProfile profile) throws IOException {
+        VerifyProfile resolveOnly = new VerifyProfile(profile.id(), List.of("validate"), profile.properties(), profile.installTimeout(), profile.verifyTimeout());
+        SideObservation full = observe(side, projectDir, outDir, resolveOnly);
+        return new SideObservation(side, full.install(), StageResult.notRun(), StageResult.notRun(), List.of(), full.dependencies(), false,
+                full.infrastructureProblem(), full.javaVersion(), full.mavenVersion());
+    }
+
     private static StageResult stage(MavenInvoker.Result result, Path log) {
         String outcome = result.timedOut() ? StageResult.TIMED_OUT : (result.exitCode() == 0 ? StageResult.PASS : StageResult.FAIL);
         return new StageResult(outcome, result.timedOut() ? null : result.exitCode(), result.seconds(), log.getFileName().toString());
