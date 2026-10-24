@@ -45,7 +45,9 @@ public class InsightService {
         DiagramData data = DiagramBuilder.fromEvidence(evidence(jobId));
         ObjectNode out = Json.object();
         out.set("diagram", new com.fasterxml.jackson.databind.ObjectMapper().valueToTree(data));
-        out.put("mermaid", MermaidRenderer.render(data, mode));
+        MermaidRenderer.Rendered rendered = MermaidRenderer.renderWithIds(data, mode);
+        out.put("mermaid", rendered.text());
+        rendered.nodeIds().forEach(out.putObject("node_ids")::put);
         out.put("mode", mode.name());
         return out;
     }

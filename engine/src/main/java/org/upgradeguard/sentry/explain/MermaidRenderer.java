@@ -23,7 +23,14 @@ public final class MermaidRenderer {
     private MermaidRenderer() {
     }
 
+    public record Rendered(String text, Map<String, String> nodeIds) {
+    }
+
     public static String render(DiagramData data, Mode mode) {
+        return renderWithIds(data, mode).text();
+    }
+
+    public static Rendered renderWithIds(DiagramData data, Mode mode) {
         Map<String, String> ids = new HashMap<>();
         StringBuilder text = new StringBuilder("flowchart TD\n");
         int counter = 0;
@@ -43,7 +50,13 @@ public final class MermaidRenderer {
         text.append("    classDef changed fill:#fff3cd,stroke:#8a6d3b;\n");
         text.append("    classDef failing fill:#f8d7da,stroke:#842029;\n");
         text.append("    classDef plain fill:#eef2f7,stroke:#445;\n");
-        return validate(text.toString());
+        Map<String, String> reverse = new java.util.LinkedHashMap<>();
+        data.nodes().forEach(node -> {
+            if (ids.containsKey(node.id())) {
+                reverse.put(ids.get(node.id()), node.id());
+            }
+        });
+        return new Rendered(validate(text.toString()), reverse);
     }
 
     private static boolean visible(DiagramData.Node node, Mode mode) {
