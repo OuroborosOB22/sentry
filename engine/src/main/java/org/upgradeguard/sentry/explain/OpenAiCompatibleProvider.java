@@ -71,7 +71,7 @@ public final class OpenAiCompatibleProvider implements ExplanationProvider {
         return safe.length() <= 110 ? safe : safe.substring(0, 110);
     }
 
-    ObjectNode facts(JsonNode evidence, DiagramData diagram, List<CodeFile> files) {
+    public static ObjectNode facts(JsonNode evidence, DiagramData diagram, List<CodeFile> files) {
         ObjectNode facts = Json.object();
         facts.put("verdict", evidence.path("verdict").path("decision").asText());
         facts.set("change", evidence.path("request").path("change"));

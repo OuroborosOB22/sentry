@@ -68,10 +68,31 @@ public class InsightController {
         return Json.text(insight.diagram(id, parseMode(mode)));
     }
 
-    @PostMapping(value = "/jobs/{id}/explain", produces = MediaType.APPLICATION_JSON_VALUE)
-    public String explain(HttpServletRequest request, @PathVariable String id) throws IOException {
+    public record ExplainBody(String mode, List<String> files, Boolean confirm) {
+    }
+
+    @GetMapping(value = "/jobs/{id}/explain-candidates", produces = MediaType.APPLICATION_JSON_VALUE)
+    public String candidates(HttpServletRequest request, @PathVariable String id) throws IOException {
         allow(request, id);
-        return Json.text(insight.explain(id));
+        var node = Json.object();
+        insight.candidateFiles(id).forEach(node.putArray("files")::add);
+        return Json.text(node);
+    }
+
+    @GetMapping(value = "/jobs/{id}/explain-preview", produces = MediaType.APPLICATION_JSON_VALUE)
+    public String preview(HttpServletRequest request, @PathVariable String id, @RequestParam(name = "file", required = false) List<String> files) throws IOException {
+        allow(request, id);
+        return Json.text(insight.preview(id, files == null ? List.of() : files));
+    }
+
+    @PostMapping(value = "/jobs/{id}/explain", produces = MediaType.APPLICATION_JSON_VALUE)
+    public String explain(HttpServletRequest request, @PathVariable String id, @RequestBody(required = false) ExplainBody body) throws IOException {
+        allow(request, id);
+        List<String> files = body == null || body.files() == null ? List.of() : body.files();
+        if (!files.isEmpty() && !Boolean.TRUE.equals(body.confirm())) {
+            throw new JobService.Rejected("sharing project files needs confirm=true after you have seen the preview");
+        }
+        return Json.text(insight.explain(id, files));
     }
 
     @GetMapping(value = "/jobs/{id}/export.md", produces = "text/markdown;charset=UTF-8")
