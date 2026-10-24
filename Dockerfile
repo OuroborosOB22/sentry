@@ -10,7 +10,7 @@ COPY contracts contracts
 RUN chmod +x mvnw && ./mvnw -B -q -pl app -am -Pproduction -DskipTests package
 
 FROM eclipse-temurin:21-jre
-RUN useradd --system --create-home --uid 10001 sentry
+RUN useradd --system --create-home --uid 10001 sentry && mkdir -p /home/sentry/data && chown sentry /home/sentry/data
 WORKDIR /home/sentry
 COPY --from=build /src/app/target/sentry-app-0.1.0.jar app.jar
 USER sentry
