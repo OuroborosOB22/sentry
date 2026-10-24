@@ -173,6 +173,17 @@ class OpenAiCompatibleProviderTest {
     }
 
     @Test
+    void secretsInsideIdentifiersUrlsAndLongLiteralsAreRedacted() {
+        String text = "String dbPassword = \"hunter2\";\nprivate static final String SECRET_KEY = 'abc';\nvar url = \"https://user:pw9@host/x\";\n"
+                + "String jwt = \"eyJhbGciOi.eyJzdWIiOi.SflKxwRJSM\";\nString token = \"sk-abcdefghijklmnopqrstuv\";\nString blob = \"AbCdEfGhIjKlMnOpQrStUvWxYz0123456789==\";\nint plain = 3;";
+        String cleaned = Redactor.redact(text);
+        for (String secret : List.of("hunter2", "abc'", "pw9", "SflKxwRJSM", "abcdefghijklmnopqrstuv", "AbCdEfGh")) {
+            assertFalse(cleaned.contains(secret), secret);
+        }
+        assertTrue(cleaned.contains("int plain = 3;"));
+    }
+
+    @Test
     void plainTextDropsWholeLinkTokensAndMarkupButKeepsNormalWords() {
         assertEquals("see the", PlainText.clean("see the [docs](https://x.example/y)", 100));
         assertEquals("a b", PlainText.clean("a <b>", 100).replace("b b", "b"));

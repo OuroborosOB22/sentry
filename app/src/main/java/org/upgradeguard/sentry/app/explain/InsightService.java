@@ -42,6 +42,7 @@ public class InsightService {
 
     public static final int MAX_FILES = 3;
     public static final int MAX_FILE_BYTES = 12_000;
+    public static final int MAX_READ_BYTES = 200_000;
     public static final int MAX_CANDIDATES = 50;
 
     public InsightService(JobService jobs, AppSettings settings, SentryProperties properties, JdbcTemplate jdbc, ProjectRepository projects) {
@@ -93,9 +94,11 @@ public class InsightService {
             if (!full.startsWith(root) || Files.isSymbolicLink(full)) {
                 throw new JobService.Rejected("that file cannot be shared");
             }
-            byte[] bytes = Files.readAllBytes(full);
-            String text = new String(bytes, 0, Math.min(bytes.length, MAX_FILE_BYTES), StandardCharsets.UTF_8);
-            files.add(new ExplanationProvider.CodeFile(name, Redactor.redact(text)));
+            if (Files.size(full) > MAX_READ_BYTES) {
+                throw new JobService.Rejected("that file is too large to share");
+            }
+            String redacted = Redactor.redact(new String(Files.readAllBytes(full), StandardCharsets.UTF_8));
+            files.add(new ExplanationProvider.CodeFile(name, redacted.length() <= MAX_FILE_BYTES ? redacted : redacted.substring(0, MAX_FILE_BYTES)));
         }
         return files;
     }
@@ -115,7 +118,11 @@ public class InsightService {
         OpenAiCompatibleProvider.evidenceIds(evidence, files).forEach(id -> items.addObject().put("id", id).put("kind", id.substring(0, id.indexOf(':'))));
         node.put("total_bytes", Json.text(facts).getBytes(StandardCharsets.UTF_8).length);
         var shown = node.putArray("files");
-        files.forEach(file -> shown.add(file.path()));
+        ObjectNode texts = node.putObject("file_texts");
+        files.forEach(file -> {
+            shown.add(file.path());
+            texts.put(file.path(), file.text());
+        });
         node.put("sent", !provider.id().equals("DISABLED"));
         node.put("note", provider.id().equals("DISABLED") ? "No model is set up, so nothing would be sent anywhere."
                 : "Repository text is sent as data, never as instructions. Secret-looking text is removed from files first.");

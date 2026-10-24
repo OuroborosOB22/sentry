@@ -95,7 +95,7 @@ class InsightApiTest {
         Files.writeString(folder.resolve("pom.xml"), "<project/>");
         Files.writeString(folder.resolve(".env"), "SECRET=hunter2");
         Files.writeString(folder.resolve("App.java"), "class App {}");
-        Files.writeString(folder.resolve("Uses.java"), "import jinja2.Thing;\nclass Uses { String password = hunter2; }");
+        Files.writeString(folder.resolve("Uses.java"), "import jinja2.Thing;\nclass Uses { String dbPassword = \"hunter2\"; String apiKey = \"abcd1234\"; String url = \"jdbc://admin:pw123@host/db\"; }");
         projects.insert(new Rows.Project("demo", "Demo", folder.toAbsolutePath().toString(), "MAVEN", Instant.now()));
         registry.register(new FakeProvider());
         worker.setPollInterval(Duration.ofMillis(20));
@@ -203,6 +203,7 @@ class InsightApiTest {
         String withFile = mvc.perform(get("/api/jobs/" + id + "/explain-preview?file=Uses.java")).andExpect(jsonPath("$.mode").value("CODE")).andExpect(jsonPath("$.files[0]").value("Uses.java"))
                 .andReturn().getResponse().getContentAsString();
         org.junit.jupiter.api.Assertions.assertTrue(withFile.contains("file:Uses.java"));
+        org.junit.jupiter.api.Assertions.assertTrue(withFile.contains("class Uses") && !withFile.contains("hunter2") && withFile.contains("redacted"));
         org.junit.jupiter.api.Assertions.assertEquals(0, llmCalls.get());
     }
 
@@ -222,7 +223,9 @@ class InsightApiTest {
         mvc.perform(post("/api/jobs/" + id + "/explain").contentType(MediaType.APPLICATION_JSON).content("{\"files\":[\"Uses.java\"],\"confirm\":true}"))
                 .andExpect(jsonPath("$.status").value("OK")).andExpect(jsonPath("$.mode").value("CODE")).andExpect(jsonPath("$.sources[0]").value("file:Uses.java"));
         org.junit.jupiter.api.Assertions.assertTrue(llmBodies.get(0).contains("class Uses"));
-        org.junit.jupiter.api.Assertions.assertFalse(llmBodies.get(0).contains("hunter2"));
+        for (String secret : new String[] {"hunter2", "abcd1234", "pw123"}) {
+            org.junit.jupiter.api.Assertions.assertFalse(llmBodies.get(0).contains(secret), secret);
+        }
     }
 
     @Test

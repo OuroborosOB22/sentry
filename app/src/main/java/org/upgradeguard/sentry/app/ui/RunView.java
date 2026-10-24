@@ -14,6 +14,7 @@ import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.ListItem;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.html.Pre;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.html.UnorderedList;
 import com.vaadin.flow.component.notification.Notification;
@@ -448,6 +449,11 @@ public class RunView extends VerticalLayout implements BeforeEnterObserver {
                 UnorderedList list = new UnorderedList();
                 shown.path("items").forEach(item -> list.add(new ListItem(item.path("id").asText())));
                 preview.add(list, new Paragraph(shown.path("total_bytes").asInt() + " bytes in total. " + (sent ? shown.path("note").asText() : "")));
+                shown.path("file_texts").properties().forEach(entry -> {
+                    Pre text = new Pre(entry.getValue().asText());
+                    text.getStyle().set("max-height", "12rem").set("overflow", "auto");
+                    preview.add(new Details("Exact text of " + entry.getKey() + " after secrets were removed", text));
+                });
                 confirm.setText(sent ? "Send this and explain" : "Build the explanation");
                 confirm.setEnabled(true);
             } catch (IOException | JobService.Rejected problem) {
