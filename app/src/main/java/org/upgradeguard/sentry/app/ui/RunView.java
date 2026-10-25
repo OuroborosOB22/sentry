@@ -303,7 +303,7 @@ public class RunView extends VerticalLayout implements BeforeEnterObserver {
         card.addClassName("card");
         card.add(new H3("What was checked"));
         FlexLayout columns = new FlexLayout();
-        columns.getStyle().set("gap", "1.5rem").set("flex-wrap", "wrap");
+        columns.addClassName("cols");
         columns.add(coverageColumn("Checked", evidence.path("coverage").path("checked")), coverageColumn("Not checked", evidence.path("coverage").path("not_checked")),
                 coverageColumn("Unavailable", evidence.path("coverage").path("unavailable")));
         card.add(columns);
@@ -312,7 +312,7 @@ public class RunView extends VerticalLayout implements BeforeEnterObserver {
 
     private static Div coverageColumn(String title, JsonNode items) {
         Div column = new Div();
-        column.getStyle().set("flex", "1 1 14rem");
+        column.addClassName("col");
         column.add(new H3(title));
         UnorderedList list = new UnorderedList();
         items.forEach(item -> list.add(new ListItem(item.asText())));
@@ -344,8 +344,9 @@ public class RunView extends VerticalLayout implements BeforeEnterObserver {
         Button svg = new Button("Download SVG", event -> diagram.fetchSvg(this::downloadSvg));
         Anchor markdown = new Anchor(new StreamResource("sentry-" + job.id() + ".md", () -> new ByteArrayInputStream(markdownBytes())), "Download Markdown");
         markdown.getElement().setAttribute("download", true);
+        markdown.addClassName("btn-link");
         FlexLayout controls = new FlexLayout(mode, zoomIn, zoomOut, fit, svg, markdown);
-        controls.getStyle().set("gap", "0.5rem").set("align-items", "end").set("flex-wrap", "wrap");
+        controls.addClassName("toolbar");
         diagram.onNodeSelected(this::describe);
         card.add(controls, diagram, drawer);
         loadDiagram("DIFF");
