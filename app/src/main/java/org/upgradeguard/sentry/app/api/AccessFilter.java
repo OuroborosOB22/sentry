@@ -21,7 +21,7 @@ import org.upgradeguard.sentry.app.config.SentryProperties;
 public class AccessFilter extends OncePerRequestFilter {
     public static final String SESSION_ATTRIBUTE = "sentry.token";
     public static final String PROJECTS_ATTRIBUTE = "sentry.projects";
-    private static final Set<String> LANDING_FILES = Set.of("/welcome/index.html", "/welcome/landing.css", "/welcome/landing.js", "/welcome/logo-64.png",
+    private static final Set<String> LANDING_FILES = Set.of("/welcome/index.html", "/welcome/landing.css", "/welcome/landing.js", "/welcome/logo-64.png", "/welcome/logo-128.png",
             "/welcome/scene.png", "/welcome/fonts/inter-latin-400-normal.woff2", "/welcome/fonts/inter-latin-600-normal.woff2",
             "/welcome/fonts/inter-latin-800-italic.woff2", "/welcome/fonts/jetbrains-mono-latin-400-normal.woff2",
             "/welcome/fonts/jetbrains-mono-latin-600-normal.woff2");
