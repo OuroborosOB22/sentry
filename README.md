@@ -65,14 +65,15 @@ Open http://127.0.0.1:8080. The front page is at `/welcome/index.html`, and **St
 
 ## How well does it work
 
-We wrote the expected answer for 13 upgrade cases before running any of them: 10 small controlled cases and 3 real projects with a known breaking update.
+We wrote the expected answer for every case before running it: 10 small controlled cases, 3 real projects with a known breaking update, and 3 healthy upgrades.
 
 | | cases | matched | baseline unusable | wrong |
 |---|---|---|---|---|
 | controlled | 10 | 10 | 0 | 0 |
-| real projects | 3 | 2 | 1 | 0 |
+| real projects, known breaking update | 3 | 2 | 1 | 0 |
+| real project, healthy upgrade (expected Accept) | 3 | 3 | 0 | 0 |
 
-For the unusable one, the project did not build even before the change, so there was nothing to compare. No upgrade was wrongly accepted. All three real projects were known breaking updates, so this says nothing about false alarms on healthy upgrades.
+For the unusable one, the project did not build even before the change, so there was nothing to compare. No upgrade was wrongly accepted and no healthy upgrade was wrongly rejected. The three healthy upgrades are all on one project (HAP-Java: slf4j-api 1.7.10 to 1.7.36, assertj-core 3.19.0 to 3.21.0, junit 4.12 to 4.13.2), and their tests ran on both sides. That is a small set: it says nothing about large projects, multi-module builds or libraries whose API changes without breaking the compile.
 
 ## Honest limits
 
