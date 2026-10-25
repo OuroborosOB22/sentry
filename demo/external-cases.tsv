@@ -2,3 +2,6 @@ id	repository	breaking_commit	pull_request	package	from	to	java_home	expected
 E1	https://github.com/hap-java/HAP-Java	6ad104c4fb9263ad1bb29e6b33618b8225efd92d	146	org.bouncycastle:bcprov-jdk15on	1.51	1.67	/Library/Java/JavaVirtualMachines/amazon-corretto-11.jdk/Contents/Home	REJECT
 E2	https://github.com/sabomichal/jooq-meta-postgres-flyway	8e1f0f08eef839903067c7c11432117c4897d0cd	74	org.jooq:jooq-meta	3.16.6	3.17.0	/Library/Java/JavaVirtualMachines/amazon-corretto-11.jdk/Contents/Home	REJECT
 E3	https://github.com/BadSkater0729/WorldwideChat	832e0f184efdad0fcf15d14cb7af5e30239ff454	109	com.github.cryptomorin:XSeries	8.5.0.1	8.6.0	/Library/Java/JavaVirtualMachines/amazon-corretto-11.jdk/Contents/Home	REJECT
+H1	https://github.com/hap-java/HAP-Java	6ad104c4fb9263ad1bb29e6b33618b8225efd92d	146	org.slf4j:slf4j-api	1.7.10	1.7.36	/Library/Java/JavaVirtualMachines/amazon-corretto-11.jdk/Contents/Home	ACCEPT
+H2	https://github.com/hap-java/HAP-Java	6ad104c4fb9263ad1bb29e6b33618b8225efd92d	146	org.assertj:assertj-core	3.19.0	3.21.0	/Library/Java/JavaVirtualMachines/amazon-corretto-11.jdk/Contents/Home	ACCEPT
+H3	https://github.com/hap-java/HAP-Java	6ad104c4fb9263ad1bb29e6b33618b8225efd92d	146	junit:junit	4.12	4.13.2	/Library/Java/JavaVirtualMachines/amazon-corretto-11.jdk/Contents/Home	ACCEPT
