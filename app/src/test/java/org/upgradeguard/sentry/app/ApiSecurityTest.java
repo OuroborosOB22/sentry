@@ -90,6 +90,14 @@ class ApiSecurityTest {
     }
 
     @Test
+    void incompleteJobRequestsAreRefusedWithABadRequest() throws Exception {
+        for (String body : new String[] {"{}", "{\"operation\":\"REHEARSE_UPGRADE\"}", "{\"operation\":\"REHEARSE_UPGRADE\",\"packageName\":\"org.demo:lib\"}",
+                "{\"operation\":\"REHEARSE_UPGRADE\",\"packageName\":\"org.demo:lib\",\"fromVersion\":\"1.0.0\"}", "{\"operation\":\"REHEARSE_RECOVERY\"}"}) {
+            mvc.perform(post("/api/projects/demo/jobs").contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isBadRequest());
+        }
+    }
+
+    @Test
     void projectsOutsideTheAllowedRootsCannotBeRegistered() throws Exception {
         Files.createDirectories(Path.of("target/outside-root"));
         Files.writeString(Path.of("target/outside-root/pom.xml"), "<project/>");
