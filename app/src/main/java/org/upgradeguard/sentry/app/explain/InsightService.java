@@ -149,7 +149,7 @@ public class InsightService {
             return new DisabledExplanationProvider();
         }
         SentryProperties.Explanation config = properties.explanation();
-        return new OpenAiCompatibleProvider(settings.explanationBaseUrl(), settings.explanationModel(), settings.apiKey(), config.timeout(), config.maxOutputTokens());
+        return new OpenAiCompatibleProvider(settings.explanationBaseUrl(), settings.explanationModel(), settings.apiKey(), config.timeout(), config.maxOutputTokens(), config.reasoningEffort());
     }
 
     public ObjectNode explain(String jobId) throws IOException {

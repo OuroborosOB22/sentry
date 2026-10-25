@@ -59,7 +59,7 @@ public class JobService {
 
     private String queue(String projectId, Submission submission) {
         Rows.Project project = projects.find(projectId).orElseThrow(() -> new Rejected("there is no project " + projectId));
-        if (!OPERATIONS.contains(submission.operation())) {
+        if (submission.operation() == null || !OPERATIONS.contains(submission.operation())) {
             throw new Rejected("operation must be one of " + OPERATIONS);
         }
         String execution = submission.execution() == null || submission.execution().isBlank() ? properties.defaultExecution() : submission.execution();

@@ -254,4 +254,21 @@ class OpenAiCompatibleProviderTest {
         assertEquals("DISABLED", result.status());
         assertEquals(0, calls.get());
     }
+
+    @Test
+    void aReasoningModelGetsReasoningSettingsAndNoTemperature() {
+        com.fasterxml.jackson.databind.node.ObjectNode plain = new OpenAiCompatibleProvider("http://127.0.0.1:1/v1", "m", null, Duration.ofSeconds(2), 800)
+                .requestBody(org.upgradeguard.sentry.contract.Json.object());
+        assertEquals(800, plain.path("max_tokens").asInt());
+        assertEquals(0, plain.path("temperature").asInt());
+        assertTrue(plain.path("reasoning_effort").isMissingNode());
+        com.fasterxml.jackson.databind.node.ObjectNode reasoning = new OpenAiCompatibleProvider("http://127.0.0.1:1/v1", "m", null, Duration.ofSeconds(2), 800, "High")
+                .requestBody(org.upgradeguard.sentry.contract.Json.object());
+        assertEquals("high", reasoning.path("reasoning_effort").asText());
+        assertEquals(12000, reasoning.path("max_completion_tokens").asInt());
+        assertTrue(reasoning.path("temperature").isMissingNode());
+        assertTrue(reasoning.path("max_tokens").isMissingNode());
+        assertTrue(new OpenAiCompatibleProvider("http://127.0.0.1:1/v1", "m", null, Duration.ofSeconds(2), 800, "extreme")
+                .requestBody(org.upgradeguard.sentry.contract.Json.object()).path("reasoning_effort").isMissingNode());
+    }
 }

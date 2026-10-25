@@ -62,7 +62,7 @@ case "$command" in
         echo "unsupported operation" > "$folder/stderr.log"
         code=3
       fi
-      echo "$code" > "$folder/exit"
+      echo "$code" > "$folder/exit.tmp" && mv "$folder/exit.tmp" "$folder/exit"
     ) > /dev/null 2>&1 &
     echo "$!" > "$folder/pid"
     printf '{"started": true}\n'
@@ -71,12 +71,17 @@ case "$command" in
     check_id "${2:-}"
     job="$2"
     folder="${root:?}/${job:?}"
-    if [ -f "$folder/exit" ]; then
+    finished() {
       code="$(cat "$folder/exit")"
       if [ "$code" -le 2 ]; then state="SUCCEEDED"; else state="FAILED"; fi
       printf '{"state": "%s", "exit": %s}\n' "$state" "$code"
+    }
+    if [ -f "$folder/exit" ]; then
+      finished
     elif [ -f "$folder/pid" ] && kill -0 "$(cat "$folder/pid")" 2>/dev/null; then
       printf '{"state": "RUNNING"}\n'
+    elif [ -f "$folder/exit" ]; then
+      finished
     else
       printf '{"state": "FAILED", "exit": -1}\n'
     fi
@@ -89,7 +94,7 @@ case "$command" in
       pid="$(cat "$folder/pid")"
       pkill -P "$pid" 2>/dev/null || true
       kill "$pid" 2>/dev/null || true
-      echo 130 > "$folder/exit"
+      echo 130 > "$folder/exit.tmp" && mv "$folder/exit.tmp" "$folder/exit"
     fi
     printf '{"cancelled": true}\n'
     ;;

@@ -70,7 +70,7 @@ class BreakCastClientTest {
     private static BreakCastClient client(boolean enabled, int port, Duration timeout) {
         return new BreakCastClient(new SentryProperties(null, List.of(), "mvn", null, null, "python3", 2, null, null, "LOCAL", false, new SentryProperties.Auth(List.of()),
                 new SentryProperties.Azure(false, null, 22, null, null, null, "ssh", "scp", "sentry-worker", 2), new SentryProperties.Explanation("DISABLED", null, null, null,
-                Duration.ofSeconds(30), 800, false), new SentryProperties.Risk(enabled, "http://127.0.0.1:" + port, timeout)));
+                Duration.ofSeconds(30), 800, false, ""), new SentryProperties.Risk(enabled, "http://127.0.0.1:" + port, timeout)));
     }
 
     private static BreakCastClient working() {
