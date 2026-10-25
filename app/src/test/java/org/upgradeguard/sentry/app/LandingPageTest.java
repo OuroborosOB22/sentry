@@ -42,6 +42,23 @@ class LandingPageTest {
     }
 
     @Test
+    void onlyTheNamedLandingFilesAreOpenAndOnlyForReading() throws Exception {
+        for (String path : new String[] {"/welcome/other.html", "/welcome/../settings", "/welcome/fonts/", "/welcome/index.html/x"}) {
+            MockFilterChain chain = new MockFilterChain();
+            assertEquals(302, through("GET", path, chain).getStatus());
+            assertNull(chain.getRequest());
+        }
+        MockFilterChain post = new MockFilterChain();
+        assertNull(post.getRequest());
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/welcome/index.html");
+        request.setRemoteAddr("203.0.113.9");
+        request.setParameter("v-r", "uidl");
+        MockFilterChain vaadin = new MockFilterChain();
+        filter.doFilter(request, new MockHttpServletResponse(), vaadin);
+        assertNull(vaadin.getRequest());
+    }
+
+    @Test
     void theShortAddressRedirectsToTheLandingPage() throws Exception {
         assertEquals("/welcome/index.html", through("GET", "/welcome", new MockFilterChain()).getRedirectedUrl());
     }

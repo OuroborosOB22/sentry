@@ -21,6 +21,10 @@ import org.upgradeguard.sentry.app.config.SentryProperties;
 public class AccessFilter extends OncePerRequestFilter {
     public static final String SESSION_ATTRIBUTE = "sentry.token";
     public static final String PROJECTS_ATTRIBUTE = "sentry.projects";
+    private static final Set<String> LANDING_FILES = Set.of("/welcome/index.html", "/welcome/landing.css", "/welcome/landing.js", "/welcome/logo-64.png",
+            "/welcome/scene.png", "/welcome/fonts/inter-latin-400-normal.woff2", "/welcome/fonts/inter-latin-600-normal.woff2",
+            "/welcome/fonts/inter-latin-800-italic.woff2", "/welcome/fonts/jetbrains-mono-latin-400-normal.woff2",
+            "/welcome/fonts/jetbrains-mono-latin-600-normal.woff2");
     private static final Set<String> LOOPBACK_HOSTS = Set.of("localhost", "127.0.0.1", "[::1]", "::1");
 
     private final SentryProperties properties;
@@ -42,14 +46,6 @@ public class AccessFilter extends OncePerRequestFilter {
             deny(response, 415, "send application/json");
             return;
         }
-        if (path.equals("/welcome") || path.equals("/welcome/")) {
-            response.sendRedirect("/welcome/index.html");
-            return;
-        }
-        if (isLanding(path)) {
-            chain.doFilter(request, response);
-            return;
-        }
         if ((path.equals("/login") || path.equals("/logout")) && !isApi(path)) {
             chain.doFilter(request, response);
             return;
@@ -60,6 +56,14 @@ public class AccessFilter extends OncePerRequestFilter {
                 return;
             }
             request.setAttribute(PROJECTS_ATTRIBUTE, List.of("*"));
+            chain.doFilter(request, response);
+            return;
+        }
+        if (path.equals("/welcome") || path.equals("/welcome/")) {
+            response.sendRedirect("/welcome/index.html");
+            return;
+        }
+        if (isLandingRequest(request, path)) {
             chain.doFilter(request, response);
             return;
         }
@@ -102,7 +106,12 @@ public class AccessFilter extends OncePerRequestFilter {
     }
 
     static boolean isLanding(String path) {
-        return path.startsWith("/welcome/");
+        return LANDING_FILES.contains(path);
+    }
+
+    private static boolean isLandingRequest(HttpServletRequest request, String path) {
+        boolean read = request.getMethod().equals("GET") || request.getMethod().equals("HEAD");
+        return read && isLanding(path) && request.getParameter("v-r") == null;
     }
 
     private static boolean changesState(HttpServletRequest request) {
