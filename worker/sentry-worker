@@ -1,0 +1,116 @@
+#!/bin/sh
+# The only program the hub is allowed to run on a remote machine.
+# It takes a fixed set of commands and nothing else, never a free-form shell string.
+set -eu
+umask 077
+
+root="${SENTRY_WORKER_HOME:-$HOME/sentry-jobs}"
+engine="${SENTRY_ENGINE_JAR:-$HOME/sentry/sentry-engine-0.1.0-cli.jar}"
+maven="${SENTRY_MAVEN:-$HOME/sentry/mvnw}"
+engine_command="${SENTRY_ENGINE_COMMAND:-java -jar $engine}"
+
+fail() { echo "{\"error\": \"$1\"}"; exit 2; }
+
+check_id() {
+  case "$1" in
+    *[!a-z0-9._-]*|""|.*) fail "bad job id" ;;
+  esac
+}
+check_word() {
+  case "$1" in
+    *[!A-Za-z0-9._:+-]*|""|-*) fail "bad value" ;;
+  esac
+}
+
+command="${1:-}"
+case "$command" in
+  capabilities)
+    java_version="$(java -version 2>&1 | head -1 | sed 's/"/ /g')"
+    printf '{"worker_version": "1", "ecosystems": ["MAVEN"], "java": "%s", "max_archive_bytes": 524288000}\n' "$java_version"
+    ;;
+  init)
+    check_id "${2:-}"
+    job="$2"
+    mkdir -p "${root:?}/${job:?}"
+    printf '{"ready": true}\n'
+    ;;
+  prepare)
+    check_id "${2:-}"
+    job="$2"
+    folder="${root:?}/${job:?}"
+    [ -f "$folder/source.zip" ] || fail "no source.zip uploaded"
+    rm -rf "${folder:?}/source"
+    mkdir -p "$folder/source"
+    unzip -q -o "$folder/source.zip" -d "$folder/source"
+    if find "$folder/source" -type l | grep -q .; then fail "links are not allowed"; fi
+    printf '{"prepared": true}\n'
+    ;;
+  start)
+    check_id "${2:-}"; check_word "${3:-}"; check_word "${4:-}"; check_word "${5:-}"; check_word "${6:-}"
+    job="$2"
+    folder="${root:?}/${job:?}"
+    [ -d "$folder/source" ] || fail "source was not prepared"
+    rm -rf "${folder:?}/out" "${folder:?}/exit" "${folder:?}/pid"
+    mkdir -p "$folder/out"
+    (
+      set +e
+      cd "$folder"
+      if [ "$3" = "verify" ]; then
+        SENTRY_MAVEN="$maven" $engine_command verify --project "$folder/source" --package "$4" --from "$5" --to "$6" --out "$folder/out" --run-id "$job" --json > "$folder/stdout.json" 2> "$folder/stderr.log"
+        code=$?
+      else
+        echo "unsupported operation" > "$folder/stderr.log"
+        code=3
+      fi
+      echo "$code" > "$folder/exit"
+    ) > /dev/null 2>&1 &
+    echo "$!" > "$folder/pid"
+    printf '{"started": true}\n'
+    ;;
+  status)
+    check_id "${2:-}"
+    job="$2"
+    folder="${root:?}/${job:?}"
+    if [ -f "$folder/exit" ]; then
+      code="$(cat "$folder/exit")"
+      if [ "$code" -le 2 ]; then state="SUCCEEDED"; else state="FAILED"; fi
+      printf '{"state": "%s", "exit": %s}\n' "$state" "$code"
+    elif [ -f "$folder/pid" ] && kill -0 "$(cat "$folder/pid")" 2>/dev/null; then
+      printf '{"state": "RUNNING"}\n'
+    else
+      printf '{"state": "FAILED", "exit": -1}\n'
+    fi
+    ;;
+  cancel)
+    check_id "${2:-}"
+    job="$2"
+    folder="${root:?}/${job:?}"
+    if [ -f "$folder/pid" ]; then
+      pid="$(cat "$folder/pid")"
+      pkill -P "$pid" 2>/dev/null || true
+      kill "$pid" 2>/dev/null || true
+      echo 130 > "$folder/exit"
+    fi
+    printf '{"cancelled": true}\n'
+    ;;
+  package)
+    check_id "${2:-}"
+    job="$2"
+    folder="${root:?}/${job:?}"
+    [ -d "$folder/out" ] || fail "no output"
+    if find "$folder/out" -type l | grep -q .; then fail "links are not allowed in the output"; fi
+    rm -f "${folder:?}/out.zip"
+    (cd "$folder/out" && zip -q -r -X -y "$folder/out.zip" .)
+    printf '{"packaged": true}\n'
+    ;;
+  cleanup)
+    check_id "${2:-}"
+    job="$2"
+    rm -rf "${root:?}/${job:?}"
+    rm -f "${root:?}/${job:?}.marker"
+    printf '{"cleaned": true}\n'
+    ;;
+  *)
+    fail "unknown command"
+    ;;
+esac

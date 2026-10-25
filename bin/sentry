@@ -1,0 +1,8 @@
+#!/bin/sh
+here="$(cd "$(dirname "$0")/.." && pwd)"
+jar="$here/engine/target/sentry-engine-0.1.0-cli.jar"
+if [ ! -f "$jar" ]; then
+  "$here/mvnw" -q -B -pl engine -DskipTests package || exit 3
+fi
+export SENTRY_MAVEN="${SENTRY_MAVEN:-$here/mvnw}"
+exec java -jar "$jar" "$@"

@@ -8,3 +8,17 @@ build/
 .env
 *.iml
 data/
+.mvn/wrapper/maven-wrapper.jar
+*.iml
+demo/fixture-repo/
+demo/evidence/
+evidence/
+app/src/main/frontend/generated/
+app/src/main/bundles/
+app/package.json
+app/package-lock.json
+app/vite.config.ts
+app/vite.generated.ts
+app/tsconfig.json
+app/types.d.ts
+app/node_modules/

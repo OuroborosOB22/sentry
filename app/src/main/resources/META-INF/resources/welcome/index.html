@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sentry: rehearse a Maven dependency upgrade first</title>
+<meta name="description" content="Sentry builds your Maven project twice, once before and once after one dependency change, then shows exactly what broke and why.">
+<link rel="icon" type="image/png" sizes="64x64" href="logo-64.png">
+<link rel="stylesheet" href="landing.css">
+<script src="landing.js" defer></script>
+</head>
+<body data-look="sentry">
+<div class="page hero-left">
+
+<nav id="nav" class="nav" aria-label="Main">
+<span class="metal" aria-hidden="true"></span>
+<div class="navfull">
+<span class="edge" aria-hidden="true"></span><span class="spot" aria-hidden="true"></span><span class="amb" aria-hidden="true"></span>
+<a class="navlogo" href="#hero" aria-label="Sentry, top of page"><img class="navmark" src="logo-128.png" alt="" width="44" height="44"><span class="plain">Sentry</span><pre aria-hidden="true" class="figtxt">███████╗███████╗███╗   ██╗████████╗██████╗ ██╗   ██╗
+██╔════╝██╔════╝████╗  ██║╚══██╔══╝██╔══██╗╚██╗ ██╔╝
+███████╗█████╗  ██╔██╗ ██║   ██║   ██████╔╝ ╚████╔╝
+╚════██║██╔══╝  ██║╚██╗██║   ██║   ██╔══██╗  ╚██╔╝
+███████║███████╗██║ ╚████║   ██║   ██║  ██║   ██║
+╚══════╝╚══════╝╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝   ╚═╝</pre></a>
+<div class="navlinks">
+<a class="figlink" href="#lifecycle" data-sec="lifecycle" aria-label="Lifecycle"><span class="plain">Lifecycle</span><pre aria-hidden="true" class="figtxt">██╗     ██╗███████╗███████╗ ██████╗██╗   ██╗ ██████╗██╗     ███████╗
+██║     ██║██╔════╝██╔════╝██╔════╝╚██╗ ██╔╝██╔════╝██║     ██╔════╝
+██║     ██║█████╗  █████╗  ██║      ╚████╔╝ ██║     ██║     █████╗
+██║     ██║██╔══╝  ██╔══╝  ██║       ╚██╔╝  ██║     ██║     ██╔══╝
+███████╗██║██║     ███████╗╚██████╗   ██║   ╚██████╗███████╗███████╗
+╚══════╝╚═╝╚═╝     ╚══════╝ ╚═════╝   ╚═╝    ╚═════╝╚══════╝╚══════╝</pre></a>
+<a class="startlink lm rip ac lift" href="/">Start <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+<button class="sq lm rip" type="button" data-theme-toggle aria-label="Switch between light and dark"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+</div>
+</div>
+<div class="navmini">
+<a href="#lifecycle" class="nv rip" data-sec="lifecycle">Lifecycle</a>
+<a href="/" class="nv ac rip">Start</a>
+<button class="sq lm rip" type="button" data-theme-toggle aria-label="Switch between light and dark"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+</div>
+</nav>
+
+<div id="ccf" class="ccf" aria-hidden="true"><div class="ccin"><div class="px16"></div><p></p></div></div>
+
+<section id="hero">
+<canvas id="wave" class="wavec" aria-hidden="true"></canvas>
+<div class="eyebrow mono in1">Dependency upgrades, rehearsed</div>
+<h1 class="hl"><span class="word w1">Try</span> <span class="word w2">the</span><br><span class="word w3">upgrade</span> <span class="word w4"><span class="morph"><span>first.</span><span>safely.</span></span></span></h1>
+<p class="lede in1 d1">Sentry builds your project twice, once before and once after one dependency change, then shows exactly what broke and why. Your real project is never touched.</p>
+<div class="cta in1 d2">
+<a href="/" class="btn-main lm rip ac lift">Start <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+<a href="#lifecycle" class="btn-alt lm rip lift">How it works</a>
+</div>
+</section>
+
+<section id="lifecycle">
+<h2 class="hl reveal">Four steps, no surprises.</h2>
+<div class="stackwrap">
+<div class="stack stackc rip pxb"><div class="body"><div class="num mono">01</div><h3 class="hl">Copy</h3><p>Your project is copied into a <span class="cc" data-v="copy" data-tip="A fresh copy in the hub work folder. Your real project is never opened for writing.">clean folder</span>. Secrets, build output and links are left behind.</p></div></div>
+<div class="stack stackc rip pxb"><div class="body"><div class="num mono">02</div><h3 class="hl">Build twice</h3><p>One side keeps today's version. The other changes only <span class="cc" data-v="bump" data-tip="Only the version of the one dependency you named changes. Nothing else in the build file.">one dependency</span> you named.</p></div></div>
+<div class="stack stackc rip pxb"><div class="body"><div class="num mono">03</div><h3 class="hl">Compare</h3><p>Resolved dependencies, test results and the library's <span class="cc" data-v="diff" data-tip="Public methods and classes the library removed or changed between the two versions.">public API</span> are diffed. Only what the change caused is reported.</p></div></div>
+<div class="stack stackc rip pxb ac"><div class="body"><div class="num mono">04</div><h3 class="hl">Verdict</h3><p>Accept, reject, or not enough evidence. Every reason points at a <span class="cc" data-v="file" data-tip="Every finding links to evidence: logs, resolved versions and test reports.">file you can open</span>.</p></div></div>
+</div>
+</section>
+
+<section id="evidence">
+<div id="evwrap">
+<div class="evpin">
+<h2 class="hl reveal">Evidence you can open.</h2>
+<p class="sub reveal">Keep scrolling and the cards slide past. You can also drag them sideways.</p>
+<div id="cfs" class="cfs reveal">
+<div class="cfc rip pxb"><div class="tag mono">environment</div><div class="name hl">Same tools</div><p>Both sides are built the same way.</p></div>
+<div class="cfc rip pxb"><div class="tag mono">vulnerabilities</div><div class="name hl">Known issues</div><p>New and resolved findings.</p></div>
+<div class="cfc rip pxb"><div class="tag mono">api changes</div><div class="name hl">Removed methods</div><p>Public methods that disappeared.</p></div>
+<div class="cfc rip pxb ac"><div class="tag mono">tests</div><div class="name hl">Test results</div><p>Only tests that passed before and fail now are flagged.</p></div>
+<div class="cfc rip pxb"><div class="tag mono">dependencies</div><div class="name hl">Versions</div><p>Direct and indirect, side by side.</p></div>
+<div class="cfc rip pxb"><div class="tag mono">diagram</div><div class="name hl">Change map</div><p>Drawn from measured facts only.</p></div>
+<div class="cfc rip pxb"><div class="tag mono">explanation</div><div class="name hl">In plain words</div><p>Optional. You preview what is shared. It never decides.</p></div>
+</div>
+</div>
+</div>
+</section>
+
+<section id="proof">
+<h2 class="hl reveal">Measured, not claimed.</h2>
+<p class="sub reveal">13 upgrade cases with the expected answer written down before any run. Run on one Mac on 25 October 2026.</p>
+<div id="bars">
+<div class="barrow main"><div class="barname">Controlled cases</div><div class="pxbar b1" data-pct="100"></div><div class="barval mono">10 of 10</div></div>
+<div class="barrow"><div class="barname">External, matched</div><div class="pxbar b2" data-pct="67"></div><div class="barval mono">2 of 3</div></div>
+<div class="barrow"><div class="barname">External, no baseline</div><div class="pxbar b3" data-pct="33"></div><div class="barval mono">1 of 3</div></div>
+<div class="barrow"><div class="barname">Real server run</div><div class="pxbar b4" data-pct="0"></div><div class="barval mono">not yet</div></div>
+</div>
+<div class="limits reveal">
+<h3>What this does not show</h3>
+<p>All three external projects are known breaking updates, so the set says nothing about false alarms on healthy upgrades.</p><p>One external project could not be built even before the change, so Sentry gave no verdict. That is counted as unusable, not as a match.</p><p>The Azure server worker has not run on a real virtual machine, and the explanation was only tried with a stand-in model.</p>
+</div>
+</section>
+
+<footer id="foot">
+<div class="footrow">
+<div id="figwrap" class="reveal">
+<h2 class="sr">Sentry by Gurman Singh, Madhur Tuteja and Paryag</h2>
+<div class="figbox"><pre aria-hidden="true" class="fig big base">███████╗███████╗███╗   ██╗████████╗██████╗ ██╗   ██╗
+██╔════╝██╔════╝████╗  ██║╚══██╔══╝██╔══██╗╚██╗ ██╔╝
+███████╗█████╗  ██╔██╗ ██║   ██║   ██████╔╝ ╚████╔╝
+╚════██║██╔══╝  ██║╚██╗██║   ██║   ██╔══██╗  ╚██╔╝
+███████║███████╗██║ ╚████║   ██║   ██║  ██║   ██║
+╚══════╝╚══════╝╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝   ╚═╝</pre><pre aria-hidden="true" class="fig big shine">███████╗███████╗███╗   ██╗████████╗██████╗ ██╗   ██╗
+██╔════╝██╔════╝████╗  ██║╚══██╔══╝██╔══██╗╚██╗ ██╔╝
+███████╗█████╗  ██╔██╗ ██║   ██║   ██████╔╝ ╚████╔╝
+╚════██║██╔══╝  ██║╚██╗██║   ██║   ██╔══██╗  ╚██╔╝
+███████║███████╗██║ ╚████║   ██║   ██║  ██║   ██║
+╚══════╝╚══════╝╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝   ╚═╝</pre><pre aria-hidden="true" class="fig big lit">███████╗███████╗███╗   ██╗████████╗██████╗ ██╗   ██╗
+██╔════╝██╔════╝████╗  ██║╚══██╔══╝██╔══██╗╚██╗ ██╔╝
+███████╗█████╗  ██╔██╗ ██║   ██║   ██████╔╝ ╚████╔╝
+╚════██║██╔══╝  ██║╚██╗██║   ██║   ██╔══██╗  ╚██╔╝
+███████║███████╗██║ ╚████║   ██║   ██║  ██║   ██║
+╚══════╝╚══════╝╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝   ╚═╝</pre></div>
+<div class="figbox nm nc1"><pre aria-hidden="true" class="fig sm base"> ██████╗ ██╗   ██╗██████╗ ███╗   ███╗ █████╗ ███╗   ██╗    ███████╗██╗███╗   ██╗ ██████╗ ██╗  ██╗
+██╔════╝ ██║   ██║██╔══██╗████╗ ████║██╔══██╗████╗  ██║    ██╔════╝██║████╗  ██║██╔════╝ ██║  ██║
+██║  ███╗██║   ██║██████╔╝██╔████╔██║███████║██╔██╗ ██║    ███████╗██║██╔██╗ ██║██║  ███╗███████║
+██║   ██║██║   ██║██╔══██╗██║╚██╔╝██║██╔══██║██║╚██╗██║    ╚════██║██║██║╚██╗██║██║   ██║██╔══██║
+╚██████╔╝╚██████╔╝██║  ██║██║ ╚═╝ ██║██║  ██║██║ ╚████║    ███████║██║██║ ╚████║╚██████╔╝██║  ██║
+ ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝    ╚══════╝╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝</pre><pre aria-hidden="true" class="fig sm shine"> ██████╗ ██╗   ██╗██████╗ ███╗   ███╗ █████╗ ███╗   ██╗    ███████╗██╗███╗   ██╗ ██████╗ ██╗  ██╗
+██╔════╝ ██║   ██║██╔══██╗████╗ ████║██╔══██╗████╗  ██║    ██╔════╝██║████╗  ██║██╔════╝ ██║  ██║
+██║  ███╗██║   ██║██████╔╝██╔████╔██║███████║██╔██╗ ██║    ███████╗██║██╔██╗ ██║██║  ███╗███████║
+██║   ██║██║   ██║██╔══██╗██║╚██╔╝██║██╔══██║██║╚██╗██║    ╚════██║██║██║╚██╗██║██║   ██║██╔══██║
+╚██████╔╝╚██████╔╝██║  ██║██║ ╚═╝ ██║██║  ██║██║ ╚████║    ███████║██║██║ ╚████║╚██████╔╝██║  ██║
+ ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝    ╚══════╝╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝</pre><pre aria-hidden="true" class="fig sm lit"> ██████╗ ██╗   ██╗██████╗ ███╗   ███╗ █████╗ ███╗   ██╗    ███████╗██╗███╗   ██╗ ██████╗ ██╗  ██╗
+██╔════╝ ██║   ██║██╔══██╗████╗ ████║██╔══██╗████╗  ██║    ██╔════╝██║████╗  ██║██╔════╝ ██║  ██║
+██║  ███╗██║   ██║██████╔╝██╔████╔██║███████║██╔██╗ ██║    ███████╗██║██╔██╗ ██║██║  ███╗███████║
+██║   ██║██║   ██║██╔══██╗██║╚██╔╝██║██╔══██║██║╚██╗██║    ╚════██║██║██║╚██╗██║██║   ██║██╔══██║
+╚██████╔╝╚██████╔╝██║  ██║██║ ╚═╝ ██║██║  ██║██║ ╚████║    ███████║██║██║ ╚████║╚██████╔╝██║  ██║
+ ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝    ╚══════╝╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝</pre></div><div class="figbox nm nc2"><pre aria-hidden="true" class="fig sm base">███╗   ███╗ █████╗ ██████╗ ██╗  ██╗██╗   ██╗██████╗     ████████╗██╗   ██╗████████╗███████╗     ██╗ █████╗
+████╗ ████║██╔══██╗██╔══██╗██║  ██║██║   ██║██╔══██╗    ╚══██╔══╝██║   ██║╚══██╔══╝██╔════╝     ██║██╔══██╗
+██╔████╔██║███████║██║  ██║███████║██║   ██║██████╔╝       ██║   ██║   ██║   ██║   █████╗       ██║███████║
+██║╚██╔╝██║██╔══██║██║  ██║██╔══██║██║   ██║██╔══██╗       ██║   ██║   ██║   ██║   ██╔══╝  ██   ██║██╔══██║
+██║ ╚═╝ ██║██║  ██║██████╔╝██║  ██║╚██████╔╝██║  ██║       ██║   ╚██████╔╝   ██║   ███████╗╚█████╔╝██║  ██║
+╚═╝     ╚═╝╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝       ╚═╝    ╚═════╝    ╚═╝   ╚══════╝ ╚════╝ ╚═╝  ╚═╝</pre><pre aria-hidden="true" class="fig sm shine">███╗   ███╗ █████╗ ██████╗ ██╗  ██╗██╗   ██╗██████╗     ████████╗██╗   ██╗████████╗███████╗     ██╗ █████╗
+████╗ ████║██╔══██╗██╔══██╗██║  ██║██║   ██║██╔══██╗    ╚══██╔══╝██║   ██║╚══██╔══╝██╔════╝     ██║██╔══██╗
+██╔████╔██║███████║██║  ██║███████║██║   ██║██████╔╝       ██║   ██║   ██║   ██║   █████╗       ██║███████║
+██║╚██╔╝██║██╔══██║██║  ██║██╔══██║██║   ██║██╔══██╗       ██║   ██║   ██║   ██║   ██╔══╝  ██   ██║██╔══██║
+██║ ╚═╝ ██║██║  ██║██████╔╝██║  ██║╚██████╔╝██║  ██║       ██║   ╚██████╔╝   ██║   ███████╗╚█████╔╝██║  ██║
+╚═╝     ╚═╝╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝       ╚═╝    ╚═════╝    ╚═╝   ╚══════╝ ╚════╝ ╚═╝  ╚═╝</pre><pre aria-hidden="true" class="fig sm lit">███╗   ███╗ █████╗ ██████╗ ██╗  ██╗██╗   ██╗██████╗     ████████╗██╗   ██╗████████╗███████╗     ██╗ █████╗
+████╗ ████║██╔══██╗██╔══██╗██║  ██║██║   ██║██╔══██╗    ╚══██╔══╝██║   ██║╚══██╔══╝██╔════╝     ██║██╔══██╗
+██╔████╔██║███████║██║  ██║███████║██║   ██║██████╔╝       ██║   ██║   ██║   ██║   █████╗       ██║███████║
+██║╚██╔╝██║██╔══██║██║  ██║██╔══██║██║   ██║██╔══██╗       ██║   ██║   ██║   ██║   ██╔══╝  ██   ██║██╔══██║
+██║ ╚═╝ ██║██║  ██║██████╔╝██║  ██║╚██████╔╝██║  ██║       ██║   ╚██████╔╝   ██║   ███████╗╚█████╔╝██║  ██║
+╚═╝     ╚═╝╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝       ╚═╝    ╚═════╝    ╚═╝   ╚══════╝ ╚════╝ ╚═╝  ╚═╝</pre></div><div class="figbox nm nc3"><pre aria-hidden="true" class="fig sm base">██████╗  █████╗ ██████╗ ██╗   ██╗ █████╗  ██████╗
+██╔══██╗██╔══██╗██╔══██╗╚██╗ ██╔╝██╔══██╗██╔════╝
+██████╔╝███████║██████╔╝ ╚████╔╝ ███████║██║  ███╗
+██╔═══╝ ██╔══██║██╔══██╗  ╚██╔╝  ██╔══██║██║   ██║
+██║     ██║  ██║██║  ██║   ██║   ██║  ██║╚██████╔╝
+╚═╝     ╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝</pre><pre aria-hidden="true" class="fig sm shine">██████╗  █████╗ ██████╗ ██╗   ██╗ █████╗  ██████╗
+██╔══██╗██╔══██╗██╔══██╗╚██╗ ██╔╝██╔══██╗██╔════╝
+██████╔╝███████║██████╔╝ ╚████╔╝ ███████║██║  ███╗
+██╔═══╝ ██╔══██║██╔══██╗  ╚██╔╝  ██╔══██║██║   ██║
+██║     ██║  ██║██║  ██║   ██║   ██║  ██║╚██████╔╝
+╚═╝     ╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝</pre><pre aria-hidden="true" class="fig sm lit">██████╗  █████╗ ██████╗ ██╗   ██╗ █████╗  ██████╗
+██╔══██╗██╔══██╗██╔══██╗╚██╗ ██╔╝██╔══██╗██╔════╝
+██████╔╝███████║██████╔╝ ╚████╔╝ ███████║██║  ███╗
+██╔═══╝ ██╔══██║██╔══██╗  ╚██╔╝  ██╔══██║██║   ██║
+██║     ██║  ██║██║  ██║   ██║   ██║  ██║╚██████╔╝
+╚═╝     ╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝</pre></div>
+</div>
+<figure class="guard pxb reveal" role="img" aria-label="A pixel-art guard holding a torch at a lit stone doorway"><img src="scene.png" alt=""></figure>
+</div>
+</footer>
+
+</div>
+</body>
+</html>
