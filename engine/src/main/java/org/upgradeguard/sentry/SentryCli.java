@@ -131,9 +131,13 @@ public final class SentryCli {
         if (args.flags().contains("json")) {
             System.out.println(Json.text(outcome.evidence()));
         } else {
-            System.out.println(outcome.verdict().decision() + ": " + operation.toLowerCase().replace('_', ' ') + " of " + args.require("package") + " from " + from + " to " + to);
-            outcome.verdict().findings().forEach(finding -> System.out.println("  [" + finding.code() + "] " + finding.message()));
-            System.out.println("evidence: " + outcome.evidenceDir());
+            Banner.print(System.out);
+            System.out.println(Banner.decision(outcome.verdict().decision().toString()) + (Banner.colour() ? " " : ": ") + operation.toLowerCase().replace('_', ' ')
+                    + " of " + args.require("package") + " from " + from + " to " + to);
+            System.out.println();
+            outcome.verdict().findings().forEach(finding -> System.out.println("  " + Banner.accent("[" + finding.code() + "]") + " " + finding.message()));
+            System.out.println();
+            System.out.println(Banner.dim("evidence:", Banner.colour()) + " " + outcome.evidenceDir());
         }
         return outcome.verdict().decision() == Decision.ACCEPT ? 0 : outcome.verdict().decision() == Decision.REJECT ? 1 : 2;
     }
