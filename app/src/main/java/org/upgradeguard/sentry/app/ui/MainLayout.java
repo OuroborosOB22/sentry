@@ -30,6 +30,9 @@ public class MainLayout extends AppLayout {
         home.getElement().setAttribute("router-ignore", true);
         RouterLink projects = new RouterLink("Projects", ProjectsView.class);
         RouterLink settings = new RouterLink("Settings", SettingsView.class);
+        home.addClassName("nav-link");
+        projects.addClassName("nav-link");
+        settings.addClassName("nav-link");
         Button theme = new Button(new Icon(VaadinIcon.ADJUST), event -> UI.getCurrent().getPage().executeJs(FLIP_THEME));
         theme.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         theme.getElement().setAttribute("aria-label", "Switch between light and dark mode");
