@@ -59,7 +59,7 @@ java -jar app/target/sentry-app-0.1.0.jar \
   --sentry.maven-executable=$PWD/mvnw
 ```
 
-Open http://127.0.0.1:8080. With no access tokens set, the hub answers only on this machine. See `.env.example` for every setting.
+Open http://127.0.0.1:8080 for the app, or http://127.0.0.1:8080/welcome/index.html for the front page. With no access tokens set, the hub answers only on this machine. See `.env.example` for every setting.
 
 ## Security rules the hub follows
 

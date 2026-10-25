@@ -4,6 +4,7 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
@@ -25,6 +26,8 @@ public class MainLayout extends AppLayout {
         mark.addClassName("brand-logo");
         H1 title = new H1(mark, new Span("Sentry"));
         title.getStyle().set("font-size", "var(--lumo-font-size-xl)").set("margin", "0").set("display", "flex").set("align-items", "center");
+        Anchor home = new Anchor("/welcome/index.html", "Home");
+        home.getElement().setAttribute("router-ignore", true);
         RouterLink projects = new RouterLink("Projects", ProjectsView.class);
         RouterLink settings = new RouterLink("Settings", SettingsView.class);
         Button theme = new Button(new Icon(VaadinIcon.ADJUST), event -> UI.getCurrent().getPage().executeJs(FLIP_THEME));
@@ -32,7 +35,7 @@ public class MainLayout extends AppLayout {
         theme.getElement().setAttribute("aria-label", "Switch between light and dark mode");
         Span note = new Span("remembers when a project worked, tries changes in separate copies");
         note.addClassName("muted");
-        HorizontalLayout bar = new HorizontalLayout(title, projects, settings, note, theme);
+        HorizontalLayout bar = new HorizontalLayout(title, home, projects, settings, note, theme);
         bar.setWidthFull();
         bar.setAlignItems(FlexComponent.Alignment.CENTER);
         bar.getStyle().set("padding", "0.5rem 1rem").set("flex-wrap", "wrap");
