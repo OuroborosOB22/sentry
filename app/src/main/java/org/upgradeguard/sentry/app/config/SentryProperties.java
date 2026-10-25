@@ -36,7 +36,8 @@ public record SentryProperties(
     }
 
     public record Explanation(@DefaultValue("DISABLED") String provider, String baseUrl, String model, String apiKeyEnvironmentVariable,
-                              @DefaultValue("PT30S") Duration timeout, @DefaultValue("800") int maxOutputTokens, @DefaultValue("false") boolean allowSourceText) {
+                              @DefaultValue("PT30S") Duration timeout, @DefaultValue("800") int maxOutputTokens, @DefaultValue("false") boolean allowSourceText,
+                              @DefaultValue("") String reasoningEffort) {
     }
 
     public record Risk(@DefaultValue("false") boolean enabled, String baseUrl, @DefaultValue("PT10S") Duration timeout) {
