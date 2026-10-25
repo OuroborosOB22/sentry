@@ -48,10 +48,11 @@ code, .mono {
 }
 
 .brand-logo {
-  width: 28px;
-  height: 28px;
-  margin-right: 0.5rem;
-  object-fit: contain;
+  width: 32px;
+  height: 32px;
+  margin-right: 0.75rem;
+  object-fit: cover;
+  border-radius: 6px;
 }
 
 .brand-mark {

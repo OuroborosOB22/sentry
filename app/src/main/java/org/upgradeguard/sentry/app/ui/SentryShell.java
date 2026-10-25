@@ -8,6 +8,6 @@ import com.vaadin.flow.theme.Theme;
 public class SentryShell implements AppShellConfigurator {
     @Override
     public void configurePage(AppShellSettings settings) {
-        settings.addFavIcon("icon", "logo.png", "512x512");
+        settings.addFavIcon("icon", "logo-64.png", "64x64");
     }
 }
