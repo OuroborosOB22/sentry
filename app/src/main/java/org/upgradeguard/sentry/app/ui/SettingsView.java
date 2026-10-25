@@ -36,7 +36,7 @@ public class SettingsView extends VerticalLayout {
         addClassName("page");
         setPadding(false);
         add(new H2("Settings"), new Paragraph("Where checks run and which model explains results are two separate choices. Changing one never changes the other, and never changes how a verdict is decided."));
-        add(executionCard(), explanationCard(), riskCard());
+        add(executionCard(), explanationCard());
     }
 
     private Div executionCard() {
@@ -113,15 +113,6 @@ public class SettingsView extends VerticalLayout {
         save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         card.add(provider, url, model, key, new Paragraph("Only measured facts are sent: the verdict, findings, dependency changes, failing test names and the coverage lists. Source code and logs are not sent. "
                 + "Turn this off and every report and diagram still works."), save);
-        return card;
-    }
-
-    private Div riskCard() {
-        Div card = new Div();
-        card.addClassName("card");
-        card.add(new H3("Risk prediction (BreakCast)"));
-        card.add(new Paragraph(properties.risk().enabled() ? "Enabled, service at " + settings.host(properties.risk().baseUrl()) + ". It advises only and never decides a verdict."
-                : "Not connected. Everything works without it."));
         return card;
     }
 }

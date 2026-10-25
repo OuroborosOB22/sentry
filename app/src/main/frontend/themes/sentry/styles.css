@@ -247,23 +247,6 @@ vaadin-details { margin: 0; }
   .card { padding: 16px; }
 }
 
-a.nav-link {
-  display: inline-flex;
-  align-items: center;
-  height: 36px;
-  padding: 0 12px;
-  border-radius: 6px;
-  font-size: var(--lumo-font-size-m);
-  font-weight: 500;
-  color: var(--lumo-secondary-text-color);
-  text-decoration: none;
-}
-a.nav-link:hover { color: var(--lumo-body-text-color); }
-a.nav-link[highlight] {
-  background: var(--lumo-primary-color);
-  color: var(--lumo-primary-contrast-color);
-}
-
 .page > .card { align-self: stretch; }
 .card h3 {
   margin: 0;
@@ -295,3 +278,117 @@ vaadin-grid::part(header-cell) {
 }
 
 .card { overflow-wrap: anywhere; }
+
+/* square boards with thick edges, the same look as the front page */
+html {
+  --lumo-border-radius-s: 0;
+  --lumo-border-radius-m: 0;
+  --lumo-border-radius-l: 0;
+  --sentry-edge: #000;
+}
+
+html[theme~="dark"] {
+  --sentry-edge: color-mix(in srgb, var(--sentry-accent) 55%, #0a0c0b);
+}
+
+.card {
+  border: 3px solid var(--sentry-edge);
+  border-radius: 0;
+  outline: none;
+}
+
+vaadin-button:not([theme~="tertiary"]) {
+  border: 3px solid var(--sentry-edge);
+  border-radius: 0;
+}
+
+vaadin-text-field, vaadin-text-area, vaadin-select, vaadin-combo-box, vaadin-password-field {
+  --vaadin-input-field-border-width: 2px;
+  --vaadin-input-field-border-color: var(--sentry-edge);
+  --vaadin-input-field-border-radius: 0;
+}
+
+vaadin-grid {
+  border: 3px solid var(--sentry-edge);
+  border-radius: 0;
+}
+
+vaadin-dialog-overlay::part(overlay) {
+  border: 3px solid var(--sentry-edge);
+  border-radius: 0;
+}
+
+.badge, .stage-chip, a.btn-link {
+  border-radius: 0;
+  border: 3px solid currentColor;
+}
+
+a.btn-link { border-color: var(--sentry-edge); }
+
+vaadin-app-layout::part(navbar) {
+  border-bottom: 3px solid var(--sentry-edge);
+}
+
+/* header: figlet letters like the front page, the shield on its own */
+.brand-logo {
+  width: 44px;
+  height: 44px;
+  margin-right: 12px;
+  border-radius: 0;
+  object-fit: contain;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--sentry-accent) 60%, transparent));
+}
+
+.topbar { max-width: 1080px; margin: 0 auto; padding: 12px 24px; gap: 16px; flex-wrap: wrap; box-sizing: border-box; }
+
+h1.brand { display: flex; align-items: center; margin: 0; font-style: normal; }
+
+pre.figlet {
+  margin: 0;
+  font-family: var(--sentry-mono);
+  font-weight: 600;
+  line-height: 1;
+  white-space: pre;
+  font-style: normal;
+  letter-spacing: 0;
+}
+
+pre.figlet-brand { font-size: 6.2px; color: var(--lumo-primary-text-color); }
+pre.figlet-link { font-size: 5.4px; }
+
+a.nav-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 0;
+  color: var(--lumo-secondary-text-color);
+  text-decoration: none;
+  border: 3px solid transparent;
+}
+
+a.nav-link:hover { color: var(--lumo-body-text-color); }
+
+a.nav-link[highlight] {
+  background: var(--sentry-accent);
+  color: var(--lumo-primary-contrast-color);
+  border-color: var(--sentry-edge);
+}
+
+.plain {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+@media (max-width: 760px) {
+  pre.figlet { display: none; }
+  .plain { position: static; width: auto; height: auto; clip-path: none; font-size: 16px; font-weight: 600; font-style: normal; }
+  h1.brand .plain { font-size: 20px; color: var(--lumo-primary-text-color); }
+  .topbar { padding: 8px 12px; gap: 12px; }
+}
+
+vaadin-button { padding: 0 20px; }
+vaadin-button[theme~="tertiary"] { padding: 0 8px; }
+vaadin-grid { font-size: 14px; }
