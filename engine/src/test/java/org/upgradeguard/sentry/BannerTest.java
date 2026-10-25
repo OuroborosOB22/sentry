@@ -22,4 +22,11 @@ class BannerTest {
         assertEquals(2, painted.split("\n").length);
         assertTrue(painted.startsWith("\u001b[1;38;5;41mab\u001b[0m"));
     }
+
+    @Test
+    void theSweepKeepsEveryLetterAndOnlyAddsColourCodes() {
+        String swept = Banner.sweep("SE TRY", true);
+        assertEquals("SE TRY", swept.replaceAll("\u001b\\[[0-9;]*m", ""));
+        assertEquals("SE TRY", Banner.sweep("SE TRY", false));
+    }
 }
