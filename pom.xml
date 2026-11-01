@@ -28,7 +28,7 @@
     <jackson2.version>2.22.4</jackson2.version>
     <schema-validator.version>2.0.8</schema-validator.version>
     <japicmp.version>0.26.5</japicmp.version>
-    <vaadin.version>25.3.3</vaadin.version>
+    <vaadin.version>25.3.4</vaadin.version>
   </properties>
 
   <dependencyManagement>
